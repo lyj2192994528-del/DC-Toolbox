@@ -1,0 +1,65 @@
+:root {
+  color: #e5eef8;
+  background: #08111f;
+  font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: grid;
+  min-width: 640px;
+  min-height: 100vh;
+  margin: 0;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgb(20 184 166 / 18%), transparent 32%),
+    radial-gradient(circle at 80% 75%, rgb(59 130 246 / 18%), transparent 35%),
+    #08111f;
+}
+
+.welcome-card {
+  width: min(680px, calc(100vw - 64px));
+  padding: 56px;
+  border: 1px solid rgb(148 163 184 / 20%);
+  border-radius: 24px;
+  background: rgb(15 23 42 / 78%);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 35%);
+  text-align: center;
+  backdrop-filter: blur(18px);
+}
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  box-shadow: 0 0 0 8px rgb(45 212 191 / 12%), 0 0 24px #2dd4bf;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #5eead4;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.2;
+}
+
+.description {
+  margin: 20px 0 0;
+  color: #94a3b8;
+  font-size: 17px;
+  line-height: 1.8;
+}
+

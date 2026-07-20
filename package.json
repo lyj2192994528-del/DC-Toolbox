@@ -1,0 +1,29 @@
+{
+  "name": "uart-scope",
+  "version": "0.1.0",
+  "description": "Windows 串口调试与实时波形显示工具",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "vue-tsc --noEmit && tsc --noEmit -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "vue": "3.5.40"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "@vue/tsconfig": "0.9.1",
+    "@vitejs/plugin-vue": "6.0.8",
+    "electron": "43.1.1",
+    "electron-vite": "5.0.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vue-tsc": "3.3.7"
+  },
+  "allowScripts": {
+    "electron@43.1.1": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.1": true
+  }
+}
