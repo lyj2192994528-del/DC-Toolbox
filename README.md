@@ -8,7 +8,9 @@
 - 配置波特率、数据位、停止位、校验位和流控，支持自定义波特率
 - 串口打开、关闭、异常断开提示和自动重连
 - ASCII/HEX 收发、UTF-8/GBK/Latin-1 编码、时间戳、回包合并、暂停显示、搜索、收发计数和发送历史
-- LF、CR、LF+CR、CR+LF 尾缀，SUM8/XOR8/CRC16-Modbus 校验、定时发送、快捷指令和 8 条多指令发送
+- LF、CR、LF+CR、CR+LF 尾缀，SUM8/XOR8/CRC16-Modbus 校验和定时发送
+- ASCII、HEX、BIN、DEC 多格式发送；20 条起步、最多 100 条的可扩展顺序循环发送
+- 接收支持自适应/固定空闲超时分帧，也可按 LF、CR 或 CRLF 分帧换行
 - DTR、RTS、Break 流控信号控制
 - CSV、NamedData、JustFloat 三种实时波形协议
 - 最多 16 通道，1～50000 点缓存/显示，滚轮缩放、拖动、通道显隐、改名、颜色、统计和截图
