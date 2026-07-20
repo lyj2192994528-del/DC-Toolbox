@@ -1,65 +1,148 @@
 :root {
-  color: #e5eef8;
-  background: #08111f;
+  color: #152033;
+  background: #f3f6fa;
   font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
-  display: grid;
-  min-width: 640px;
+  min-width: 720px;
   min-height: 100vh;
   margin: 0;
-  place-items: center;
-  background:
-    radial-gradient(circle at 20% 20%, rgb(20 184 166 / 18%), transparent 32%),
-    radial-gradient(circle at 80% 75%, rgb(59 130 246 / 18%), transparent 35%),
-    #08111f;
+  background: #f3f6fa;
 }
 
-.welcome-card {
-  width: min(680px, calc(100vw - 64px));
-  padding: 56px;
-  border: 1px solid rgb(148 163 184 / 20%);
-  border-radius: 24px;
-  background: rgb(15 23 42 / 78%);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 35%);
-  text-align: center;
-  backdrop-filter: blur(18px);
+button, select { font: inherit; }
+
+.app-shell {
+  width: min(960px, calc(100vw - 64px));
+  margin: 0 auto;
+  padding: 38px 0 52px;
 }
 
-.status-dot {
-  width: 14px;
-  height: 14px;
-  margin: 0 auto 20px;
-  border-radius: 50%;
-  background: #2dd4bf;
-  box-shadow: 0 0 0 8px rgb(45 212 191 / 12%), 0 0 24px #2dd4bf;
+.app-header, .card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
-.eyebrow {
-  margin: 0 0 12px;
-  color: #5eead4;
+.app-header { margin-bottom: 24px; }
+
+h1, h2, p { margin-top: 0; }
+h1 { margin-bottom: 5px; color: #152033; font-size: 34px; line-height: 1.2; }
+h2 { margin-bottom: 7px; color: #152033; font-size: 21px; }
+
+.subtitle {
+  margin-bottom: 0;
+  color: #77839a;
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
 }
 
-h1 {
-  margin: 0;
-  font-size: clamp(32px, 5vw, 52px);
-  line-height: 1.2;
+.status-pill {
+  max-width: 360px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  color: #657085;
+  background: #e7ebf1;
+  font-size: 13px;
 }
 
-.description {
-  margin: 20px 0 0;
-  color: #94a3b8;
-  font-size: 17px;
-  line-height: 1.8;
+.status-pill.online { color: #08734d; background: #dff8ed; }
+
+.overview-card {
+  margin-bottom: 24px;
+  padding: 30px 34px;
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, #0866d8, #11a2be);
+  box-shadow: 0 14px 32px rgb(10 99 190 / 22%);
 }
 
+.overview-label, .overview-meta { display: block; font-size: 14px; opacity: 0.82; }
+.overview-value { display: flex; align-items: baseline; gap: 16px; margin: 8px 0 6px; }
+.overview-value strong { font-size: 54px; line-height: 1.25; }
+.overview-value span { font-size: 18px; font-weight: 600; }
+
+.panel {
+  padding: 28px 30px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgb(31 53 84 / 7%);
+}
+
+.card-heading { margin-bottom: 24px; }
+.card-heading p { margin-bottom: 0; color: #8490a4; font-size: 14px; }
+
+button {
+  min-width: 112px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: #176fd1;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) { background: #0c5fbd; }
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #3b4a60;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dfe6ef;
+  border-radius: 11px;
+  color: #26354a;
+  outline: none;
+  background: #f8fafd;
+}
+
+select:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 111 209 / 10%); }
+
+.port-details { margin: 22px 0 0; }
+
+.port-details div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.port-details div:last-child { border-bottom: 0; }
+.port-details dt { color: #667287; font-size: 14px; }
+.port-details dd { margin: 0; color: #25364d; font-weight: 600; overflow-wrap: anywhere; }
+
+.empty-state {
+  display: grid;
+  gap: 7px;
+  margin-top: 22px;
+  padding: 28px;
+  border: 1px dashed #d9e1eb;
+  border-radius: 12px;
+  color: #8a94a7;
+  text-align: center;
+}
+
+.empty-state strong { color: #3b4a60; }
+
+.error-message {
+  margin: 18px 0 0;
+  padding: 13px 15px;
+  border-radius: 10px;
+  color: #bc3434;
+  background: #fff0f0;
+  line-height: 1.6;
+}

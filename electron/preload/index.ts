@@ -1,3 +1,5 @@
-// 阶段 1 暂不向页面暴露任何系统能力；后续串口 API 会在这里按需添加。
-export {}
+import { contextBridge, ipcRenderer } from 'electron'
 
+contextBridge.exposeInMainWorld('uartScope', {
+  listSerialPorts: () => ipcRenderer.invoke('serial:list')
+})

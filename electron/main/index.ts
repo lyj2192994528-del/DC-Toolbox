@@ -1,5 +1,18 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'node:path'
+import { listSerialPorts } from './serial-manager'
+
+ipcMain.handle('serial:list', async () => {
+  try {
+    return { ok: true as const, ports: await listSerialPorts() }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    return {
+      ok: false as const,
+      error: `扫描串口失败：${detail}。请检查串口驱动后重试。`
+    }
+  }
+})
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -37,4 +50,3 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
-
