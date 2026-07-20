@@ -2,26 +2,78 @@
   "name": "uart-scope",
   "version": "0.1.0",
   "description": "Windows 串口调试与实时波形显示工具",
+  "author": "LYJ0807",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "typecheck": "vue-tsc --noEmit && tsc --noEmit -p tsconfig.node.json"
+    "pack:dir": "npm run build && electron-builder --dir --win --x64",
+    "dist:win": "npm run build && electron-builder --win nsis portable --x64",
+    "typecheck": "vue-tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "test": "node --test tests/core.test.ts",
+    "test:loopback": "node scripts/serial-loopback.mjs COM10 115200",
+    "test:performance": "node scripts/performance-test.mjs",
+    "test:storage": "node scripts/storage-test.mjs"
   },
   "dependencies": {
     "serialport": "13.0.0",
     "vue": "3.5.40"
   },
   "devDependencies": {
-    "@electron/rebuild": "4.2.0",
     "@types/node": "26.1.1",
     "@vitejs/plugin-vue": "6.0.8",
     "@vue/tsconfig": "0.9.1",
     "electron": "43.1.1",
+    "electron-builder": "26.15.3",
     "electron-vite": "5.0.0",
     "typescript": "5.9.3",
     "vite": "7.3.6",
     "vue-tsc": "3.3.7"
+  },
+  "build": {
+    "appId": "com.lyj.uartscope",
+    "productName": "UartScope",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "artifacts"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "asar": false,
+    "npmRebuild": false,
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "UartScope",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "${productName}-${version}-${arch}-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-${arch}-Portable.${ext}"
+    }
   },
   "allowScripts": {
     "electron@43.1.1": true,

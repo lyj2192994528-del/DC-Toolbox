@@ -1,15 +1,54 @@
 # UartScope
 
-面向嵌入式工程师的 Windows 串口调试与实时波形显示工具。
+面向嵌入式开发的 Windows 串口调试与实时波形助手。使用 Electron、Vue 3、TypeScript 和 SerialPort 构建。
 
-## 当前阶段
+## 已完成功能
 
-阶段 1：Electron + Vue 3 + TypeScript 基础窗口。
+- 扫描串口并显示端口、制造商、VID/PID 和序列号
+- 配置波特率、数据位、停止位、校验位和流控，支持自定义波特率
+- 串口打开、关闭、异常断开提示和自动重连
+- ASCII/HEX 收发、时间戳、自动换行、暂停显示、搜索、收发计数和发送历史
+- CR、LF、CRLF 尾缀，定时发送和快捷指令
+- CSV、NamedData、JustFloat 三种实时波形协议
+- 最多 16 通道，通道显隐、改名、颜色、统计、缩放、拖动和截图
+- 原始串口数据记录（BIN + JSON 元数据）与波形 CSV 导出
+- 串口参数、窗口位置和自定义波特率持久化；损坏配置自动恢复
+- Windows x64 安装包和免安装便携版
 
 ## 开发命令
 
 ```powershell
 npm install
 npm run dev
+npm run typecheck
+npm test
+npm run test:loopback
+npm run test:performance
+npm run test:storage
+npm run dist:win
 ```
 
+`test:loopback` 默认测试 `COM10 @ 115200`，要求该串口处于自发自收状态，并且运行测试前关闭应用中的串口连接。
+
+## 波形数据格式
+
+CSV（每行一帧）：
+
+```text
+1.25,-2.5,3e-2
+```
+
+NamedData（逗号或空格分隔，冒号或等号均可）：
+
+```text
+voltage:3.30,current=0.125,power:0.4125
+```
+
+JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `00 00 80 7F`。通道数需在波形面板中设置。
+
+## 发布文件
+
+- `artifacts/UartScope-0.1.0-x64-Setup.exe`：Windows 安装程序
+- `artifacts/UartScope-0.1.0-x64-Portable.exe`：免安装便携版
+
+当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。
