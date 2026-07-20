@@ -20,6 +20,9 @@ const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
 const activePage = ref<'terminal' | 'waveform' | 'recording'>('terminal')
 const settingsWarning = ref('')
+const connectionExpanded = ref(true)
+const signals = ref({ dtr: false, rts: false, brk: false })
+const signalError = ref('')
 let settingsCache: PersistedSettings | undefined
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined
@@ -108,6 +111,14 @@ async function toggleConnection(): Promise<void> {
   }
 }
 
+async function toggleSignal(name: 'dtr' | 'rts' | 'brk'): Promise<void> {
+  signalError.value = ''
+  const next = !signals.value[name]
+  const result = await window.uartScope.setSerialSignals({ [name]: next })
+  if (result.ok) signals.value[name] = next
+  else signalError.value = result.error
+}
+
 function scheduleReconnect(): void {
   if (!autoReconnect.value || reconnectTimer || reconnecting || !selectedPath.value) return
   reconnectTimer = setTimeout(async () => {
@@ -144,6 +155,8 @@ onMounted(async () => {
     connectionMessage.value = status.message
     if (status.state === 'error') errorMessage.value = status.message
     if (status.state === 'connected' && reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = undefined }
+    if (status.state === 'connected') connectionExpanded.value = false
+    if (status.state === 'disconnected' && !status.unexpected) connectionExpanded.value = true
     if (status.state === 'disconnected' && status.unexpected) scheduleReconnect()
   })
   const loaded = await window.uartScope.getSettings()
@@ -173,14 +186,12 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     </header>
 
     <main class="panel connection-panel">
-      <div class="card-heading">
+      <div class="card-heading compact-connection-heading">
         <div><h2>串口连接</h2><p>{{ statusMessage }} · 打开串口后配置将被锁定</p></div>
-        <button class="refresh-button" type="button" :disabled="isScanning || isConnected || isBusy" @click="refreshPorts">
-          {{ isScanning ? '扫描中…' : '刷新串口' }}
-        </button>
+        <div class="connection-heading-actions"><div v-if="isConnected" class="signal-controls" aria-label="流控信号"><span>流控信号</span><button v-for="name in (['dtr', 'rts', 'brk'] as const)" :key="name" class="signal-button" :class="{ active: signals[name] }" @click="toggleSignal(name)">{{ name === 'brk' ? 'Break' : name.toUpperCase() }}</button></div><button class="soft-button" @click="connectionExpanded = !connectionExpanded">{{ connectionExpanded ? '收起参数' : '展开参数' }}</button><button class="refresh-button" type="button" :disabled="isScanning || isConnected || isBusy" @click="refreshPorts">{{ isScanning ? '扫描中…' : '刷新串口' }}</button></div>
       </div>
 
-      <div class="port-action-row">
+      <div v-if="connectionExpanded" class="port-action-row">
         <label class="field port-field"><span>COM 端口</span><select v-model="selectedPath" :disabled="isScanning || ports.length === 0 || isConnected || isBusy">
           <option v-if="ports.length === 0" value="">暂无可用串口</option>
           <option v-for="port in ports" :key="port.path" :value="port.path">{{ port.path }}{{ port.manufacturer ? ` — ${port.manufacturer}` : '' }}</option>
@@ -190,7 +201,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
         </button>
       </div>
 
-      <div class="settings-grid">
+      <div v-if="connectionExpanded" class="settings-grid">
         <label class="field"><span>波特率</span><input v-model="baudRateText" list="baud-rate-options" inputmode="numeric" :disabled="isConnected || isBusy" @input="normalizeBaudRate" /></label>
         <datalist id="baud-rate-options"><option v-for="rate in allBaudRates" :key="rate" :value="rate" /></datalist>
         <label class="field"><span>数据位</span><select v-model.number="dataBits" :disabled="isConnected || isBusy"><option :value="5">5</option><option :value="6">6</option><option :value="7">7</option><option :value="8">8</option></select></label>
@@ -198,28 +209,29 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
         <label class="field"><span>校验位</span><select v-model="parity" :disabled="isConnected || isBusy"><option value="none">None</option><option value="even">Even</option><option value="odd">Odd</option><option value="mark">Mark</option><option value="space">Space</option></select></label>
         <label class="field"><span>流控</span><select v-model="flowControl" :disabled="isConnected || isBusy"><option value="none">None</option><option value="rtscts">RTS/CTS</option></select></label>
       </div>
-      <label class="reconnect-option"><input v-model="autoReconnect" type="checkbox" :disabled="isConnected" /> 设备意外拔出后自动重连</label>
-      <p v-if="baudRateError" class="field-error">{{ baudRateError }}</p>
+      <label v-if="connectionExpanded" class="reconnect-option"><input v-model="autoReconnect" type="checkbox" :disabled="isConnected" /> 设备意外拔出后自动重连</label>
+      <p v-if="connectionExpanded && baudRateError" class="field-error">{{ baudRateError }}</p>
 
       <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
 
-      <dl v-if="selectedPort" class="device-summary">
+      <dl v-if="connectionExpanded && selectedPort" class="device-summary">
         <div><dt>端口</dt><dd>{{ selectedPort.path }}</dd></div>
         <div><dt>制造商</dt><dd>{{ selectedPort.manufacturer || '未提供' }}</dd></div>
         <div><dt>VID / PID</dt><dd>{{ selectedPort.vendorId || '—' }} / {{ selectedPort.productId || '—' }}</dd></div>
         <div><dt>序列号</dt><dd :title="selectedPort.serialNumber">{{ selectedPort.serialNumber || '未提供' }}</dd></div>
       </dl>
 
-      <div v-else-if="!isScanning && !errorMessage" class="empty-state">
+      <div v-else-if="connectionExpanded && !isScanning && !errorMessage && !selectedPort" class="empty-state">
         <strong>没有检测到串口</strong>
         <span>请插入 USB 转串口设备，然后点击“刷新串口”。</span>
       </div>
+      <p v-if="signalError" class="field-error">{{ signalError }}</p>
     </main>
 
     <p v-if="settingsWarning" class="config-warning">{{ settingsWarning }}</p>
     <nav class="page-tabs"><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'">串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'">实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'">数据记录</button></nav>
-    <TerminalPanel v-show="activePage === 'terminal'" :connected="isConnected" />
-    <WaveformPanel v-show="activePage === 'waveform'" />
-    <RecordingPanel v-show="activePage === 'recording'" :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" />
+    <div class="page-content" :class="{ hidden: activePage !== 'terminal' }"><TerminalPanel :connected="isConnected" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'waveform' }"><WaveformPanel /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'recording' }"><RecordingPanel :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" /></div>
   </div>
 </template>

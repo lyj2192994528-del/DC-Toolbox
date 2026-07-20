@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('uartScope', {
   openSerialPort: (options: unknown) => ipcRenderer.invoke('serial:open', options),
   closeSerialPort: () => ipcRenderer.invoke('serial:close'),
   writeSerialData: (data: number[]) => ipcRenderer.invoke('serial:write', data),
+  setSerialSignals: (signals: { dtr?: boolean; rts?: boolean; brk?: boolean }) => ipcRenderer.invoke('serial:set-signals', signals),
+  encodeText: (text: string, encoding: 'utf8' | 'gbk' | 'latin1') => ipcRenderer.invoke('text:encode', text, encoding),
   onSerialStatus: (listener: (status: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, status: unknown): void => listener(status)
     ipcRenderer.on('serial:status', handler)

@@ -132,4 +132,12 @@ export class SerialManager {
       })
     })
   }
+
+  async setSignals(signals: { dtr?: boolean; rts?: boolean; brk?: boolean }): Promise<void> {
+    if (!this.port?.isOpen) throw new Error('串口未打开，无法设置流控信号。')
+    const port = this.port
+    await new Promise<void>((resolve, reject) => {
+      port.set(signals, (error) => error ? reject(new Error(explainSerialError(error, port.path))) : resolve())
+    })
+  }
 }

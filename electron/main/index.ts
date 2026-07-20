@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { join } from 'node:path'
 import { writeFile } from 'node:fs/promises'
+import iconv from 'iconv-lite'
 import { SerialManager, type SerialOpenOptions } from './serial-manager'
 import { FileRecorder } from './file-recorder'
 import { SettingsManager, type PersistedSettings } from './settings-manager'
@@ -94,6 +95,30 @@ ipcMain.handle('serial:write', async (_event, value: unknown) => {
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : String(error) }
   }
+})
+
+ipcMain.handle('serial:set-signals', async (_event, value: unknown) => {
+  try {
+    if (!value || typeof value !== 'object') throw new Error('流控信号参数无效。')
+    const source = value as Record<string, unknown>
+    const signals: { dtr?: boolean; rts?: boolean; brk?: boolean } = {}
+    for (const key of ['dtr', 'rts', 'brk'] as const) {
+      if (source[key] !== undefined) {
+        if (typeof source[key] !== 'boolean') throw new Error(`${key.toUpperCase()} 必须是布尔值。`)
+        signals[key] = source[key]
+      }
+    }
+    await serialManager.setSignals(signals)
+    return { ok: true as const }
+  } catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
+
+ipcMain.handle('text:encode', (_event, text: unknown, encoding: unknown) => {
+  try {
+    if (typeof text !== 'string' || text.length > 1_000_000) throw new Error('待编码文本无效或过长。')
+    if (!['utf8', 'gbk', 'latin1'].includes(String(encoding))) throw new Error('不支持该字符编码。')
+    return { ok: true as const, bytes: Array.from(iconv.encode(text, String(encoding))) }
+  } catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
 })
 
 ipcMain.handle('record:choose-directory', async () => {

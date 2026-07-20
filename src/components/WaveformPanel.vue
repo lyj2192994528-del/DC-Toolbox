@@ -30,7 +30,7 @@ const paused = ref(false)
 const autoScale = ref(true)
 const fixedMin = ref('-10')
 const fixedMax = ref('10')
-const pointLimit = ref(5000)
+const pointLimit = ref(50000)
 const frameRate = ref(0)
 const receiveFrames = ref(0)
 const parseErrors = ref(0)
@@ -40,6 +40,11 @@ const channelCountPolicy = ref<'accept' | 'drop' | 'reset'>('accept')
 const missingChannelPolicy = ref<'skip' | 'hold'>('skip')
 const expectedCsvChannels = ref(0)
 const visiblePoints = ref(1000)
+const protocolHelp = computed(() => ({
+  csv: 'CSV：每行是一帧，多个通道用英文逗号分隔。例如：1.25,-2.5,3e-2，并以换行结尾。',
+  named: 'NamedData：每行是一帧，名称和值用冒号或等号连接。例如：voltage:3.3,current=0.12，并以换行结尾。',
+  justfloat: 'JustFloat：按小端 Float32 依次发送各通道，每帧末尾追加 00 00 80 7F；请先选择正确的通道数。'
+}[protocol.value]))
 const viewOffset = ref(0)
 let dragging = false
 let dragStartX = 0
@@ -53,7 +58,13 @@ let fpsStarted = performance.now()
 
 watch(protocol, (value) => { if (value !== 'justfloat') parser.setProtocol(value); clearWaveform() })
 watch(justFloatChannels, (value) => { justFloatParser.setChannelCount(value); clearWaveform() })
-watch(pointLimit, (value) => { for (const channel of channels.values()) channel.samples.resize(value) })
+watch(pointLimit, (value) => {
+  const normalized = Math.max(1, Math.min(50000, Math.round(Number(value) || 1)))
+  if (normalized !== value) { pointLimit.value = normalized; return }
+  visiblePoints.value = Math.min(visiblePoints.value, normalized)
+  for (const channel of channels.values()) channel.samples.resize(normalized)
+})
+watch(visiblePoints, (value) => { const normalized = Math.max(1, Math.min(pointLimit.value, Math.round(Number(value) || 1))); if (normalized !== value) visiblePoints.value = normalized })
 
 function consume(data: Uint8Array): void {
   if (protocol.value === 'justfloat') {
@@ -166,7 +177,7 @@ function draw(now: number): void {
 function onWheel(event: WheelEvent): void {
   event.preventDefault()
   const factor = event.deltaY > 0 ? 1.25 : 0.8
-  visiblePoints.value = Math.max(100, Math.min(pointLimit.value, Math.round(visiblePoints.value * factor)))
+  visiblePoints.value = Math.max(1, Math.min(pointLimit.value, Math.round(visiblePoints.value * factor)))
 }
 
 function onPointerDown(event: PointerEvent): void {
@@ -234,11 +245,13 @@ onBeforeUnmount(() => { removeDataListener?.(); cancelAnimationFrame(animationId
         <label><input v-model="autoScale" type="checkbox" /> Y 轴自动缩放</label>
         <label>最小 <input v-model="fixedMin" :disabled="autoScale" /></label>
         <label>最大 <input v-model="fixedMax" :disabled="autoScale" /></label>
-        <label>显示点数 <select v-model.number="pointLimit"><option :value="1000">1000</option><option :value="5000">5000</option><option :value="10000">10000</option></select></label>
+        <label>缓存点数 <input v-model.number="pointLimit" type="number" min="1" max="50000" /></label>
+        <label>显示点数 <input v-model.number="visiblePoints" type="number" min="1" :max="pointLimit" /></label>
         <label v-if="protocol === 'csv'">通道变化 <select v-model="channelCountPolicy"><option value="accept">接受</option><option value="drop">丢弃</option><option value="reset">清空重建</option></select></label>
         <label v-else-if="protocol === 'named'">缺少通道 <select v-model="missingChannelPolicy"><option value="skip">跳过该通道</option><option value="hold">保持上一值</option></select></label>
         <label v-else>JustFloat 通道 <select v-model.number="justFloatChannels"><option v-for="count in 16" :key="count" :value="count">{{ count }}</option></select></label>
       </div>
+      <div class="protocol-help"><strong>当前协议：{{ protocol === 'csv' ? 'FireWater / CSV' : protocol === 'named' ? 'NamedData' : 'JustFloat' }}</strong><span>{{ protocolHelp }}</span></div>
       <canvas ref="canvasRef" class="waveform-canvas" @wheel="onWheel" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @pointercancel="onPointerUp"></canvas>
       <p class="chart-hint">鼠标滚轮缩放 · 左右拖动查看历史 · 当前窗口 {{ visiblePoints }} 点<span v-if="viewOffset"> · 距最新 {{ viewOffset }} 点</span></p>
       <p v-if="lastError" class="parse-warning">{{ lastError }}</p>

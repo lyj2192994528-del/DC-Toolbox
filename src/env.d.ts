@@ -42,6 +42,8 @@ interface Window {
     openSerialPort: (options: SerialOpenOptions) => Promise<SerialActionResult>
     closeSerialPort: () => Promise<SerialActionResult>
     writeSerialData: (data: number[]) => Promise<SerialWriteResult>
+    setSerialSignals: (signals: { dtr?: boolean; rts?: boolean; brk?: boolean }) => Promise<SerialActionResult>
+    encodeText: (text: string, encoding: 'utf8' | 'gbk' | 'latin1') => Promise<{ ok: true; bytes: number[] } | { ok: false; error: string }>
     onSerialStatus: (listener: (status: SerialStatusEvent) => void) => () => void
     onSerialData: (listener: (data: Uint8Array) => void) => () => void
     chooseRecordDirectory: () => Promise<string | null>

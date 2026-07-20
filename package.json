@@ -16,6 +16,7 @@
     "test:storage": "node scripts/storage-test.mjs"
   },
   "dependencies": {
+    "iconv-lite": "0.7.3",
     "serialport": "13.0.0",
     "vue": "3.5.40"
   },
