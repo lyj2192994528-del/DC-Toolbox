@@ -158,17 +158,54 @@ ipcMain.handle('settings:set', async (_event, value: PersistedSettings) => {
   catch (error) { return { ok: false as const, error: `保存配置失败：${error instanceof Error ? error.message : String(error)}` } }
 })
 
-function createWindow(): void {
+interface SplashState { window: BrowserWindow; startedAt: number }
+
+/**
+ * 独立启动窗口不依赖 Vue、串口扫描或设置加载，应用就绪后优先显示。
+ * 图形与 build/icon.svg 使用同一条波形路径，避免标题栏和软件图标不一致。
+ */
+function createSplashWindow(): SplashState {
+  const splash = new BrowserWindow({
+    width: 520,
+    height: 430,
+    center: true,
+    frame: false,
+    transparent: false,
+    resizable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    show: false,
+    backgroundColor: '#09182d',
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
+  })
+  const version = app.getVersion()
+  const html = `<!doctype html><html><head><meta charset="UTF-8"><style>
+    *{box-sizing:border-box}body{margin:0;overflow:hidden;color:#fff;background:radial-gradient(circle at 50% 35%,#183f75,#0c213f 55%,#071426);font-family:"Microsoft YaHei UI","Segoe UI",sans-serif}
+    .screen{height:100vh;display:grid;place-items:center;position:relative}.ring{position:absolute;width:390px;height:390px;border:1px solid #48b8e733;border-radius:50%;animation:ring 1.65s ease-out infinite}.ring.two{animation-delay:.5s}
+    .card{position:relative;width:360px;padding:30px 36px 24px;text-align:center;border:1px solid #ffffff2b;border-radius:28px;background:#ffffff12;box-shadow:0 24px 70px #0005;animation:enter .55s cubic-bezier(.2,.8,.2,1) both}
+    svg{width:132px;height:132px;filter:drop-shadow(0 13px 24px #0005);animation:icon .75s cubic-bezier(.2,.8,.2,1) both}h1{margin:15px 0 3px;font-size:31px}p{margin:0;color:#b9cbe3;font-size:12px;letter-spacing:.14em}.bar{height:4px;margin-top:23px;overflow:hidden;border-radius:99px;background:#ffffff1f}.bar i{display:block;height:100%;transform-origin:left;background:linear-gradient(90deg,#46d7de,#4da1ff);animation:load 1.5s ease-out both}.version{display:block;margin-top:13px;color:#c6d5e8;font:600 13px Consolas;letter-spacing:.1em}
+    @keyframes enter{from{transform:translateY(18px) scale(.96);opacity:0}}@keyframes icon{from{transform:rotate(-8deg) scale(.72);opacity:0}}@keyframes load{from{transform:scaleX(0)}to{transform:scaleX(1)}}@keyframes ring{from{transform:scale(.35);opacity:.7}to{transform:scale(1);opacity:0}}
+  </style></head><body><div class="screen"><div class="ring"></div><div class="ring two"></div><div class="card">
+  <svg viewBox="0 0 512 512" aria-label="DC Toolbox 软件图标"><defs><linearGradient id="g" x1="64" y1="64" x2="448" y2="448"><stop stop-color="#176fd1"/><stop offset="1" stop-color="#10a2be"/></linearGradient></defs><rect x="24" y="24" width="464" height="464" rx="108" fill="url(#g)"/><path d="M92 274h66l34-98 55 196 48-154 33 86h92" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/><circle cx="92" cy="274" r="22" fill="#fff"/><circle cx="420" cy="304" r="22" fill="#fff"/></svg>
+  <h1>DC Toolbox</h1><p>嵌入式开发调试工具箱</p><div class="bar"><i></i></div><strong class="version">v${version}</strong></div></div></body></html>`
+  splash.once('ready-to-show', () => splash.show())
+  void splash.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`)
+  return { window: splash, startedAt: Date.now() }
+}
+
+function createWindow(splashState: SplashState): void {
   const savedBounds = settingsManager.get().window
+  const applicationIcon = join(app.getAppPath(), 'build', 'icon.png')
   const mainWindow = new BrowserWindow({
-    width: Math.max(savedBounds?.width ?? 1440, 1280),
-    height: Math.max(savedBounds?.height ?? 900, 800),
+    width: 1280,
+    height: 820,
     x: savedBounds?.x,
     y: savedBounds?.y,
-    minWidth: 720,
-    minHeight: 520,
+    minWidth: 1080,
+    minHeight: 720,
     show: false,
     title: 'DC Toolbox',
+    icon: applicationIcon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -178,9 +215,13 @@ function createWindow(): void {
   })
 
   mainWindow.once('ready-to-show', () => {
-    // 工具数量增加后优先使用完整桌面空间，用户仍可点击“还原”调整大小。
-    mainWindow.maximize()
-    mainWindow.show()
+    // 启动画面至少展示 1.5 秒，之后无缝切换到尺寸适中的主窗口。
+    const remaining = Math.max(0, 1500 - (Date.now() - splashState.startedAt))
+    setTimeout(() => {
+      if (!splashState.window.isDestroyed()) splashState.window.close()
+      mainWindow.center()
+      mainWindow.show()
+    }, remaining)
   })
   mainWindow.on('close', () => {
     const bounds = mainWindow.getBounds()
@@ -225,14 +266,15 @@ async function migrateLegacySettings(): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  const splashState = createSplashWindow()
   await migrateLegacySettings()
   settingsManager = new SettingsManager(join(app.getPath('userData'), 'settings.json'))
   await settingsManager.load()
   installChineseMenu()
-  createWindow()
+  createWindow(splashState)
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(createSplashWindow())
   })
 })
 
