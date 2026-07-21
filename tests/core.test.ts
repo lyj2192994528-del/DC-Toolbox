@@ -6,6 +6,7 @@ import { parseHexInput } from '../src/utils/hex.ts'
 import { JustFloatParser } from '../src/parsers/JustFloatParser.ts'
 import { calculateOhmsLaw } from '../src/calculators/ohmsLaw.ts'
 import { calculateNonInverting, feedbackResistanceForGain, groundResistanceForGain } from '../src/calculators/opAmp.ts'
+import { calculateDivider, dividerBottomResistance, dividerInputVoltage, dividerTopResistance } from '../src/calculators/resistorDivider.ts'
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])
@@ -89,4 +90,14 @@ test('同相运放计算增益、输出限幅并支持反算电阻', () => {
   assert.equal(feedbackResistanceForGain(10_000, 3), 20_000)
   assert.equal(groundResistanceForGain(20_000, 3), 10_000)
   assert.throws(() => feedbackResistanceForGain(10_000, 1), /大于 1/)
+})
+
+test('电阻分压计算器支持输出、输入与上下臂电阻反算', () => {
+  const result = calculateDivider(5, 10_000, 10_000)
+  assert.equal(result.outputVoltage, 2.5)
+  assert.equal(result.ratio, 0.5)
+  assert.equal(dividerInputVoltage(2.5, 10_000, 10_000), 5)
+  assert.equal(dividerBottomResistance(5, 2.5, 10_000), 10_000)
+  assert.equal(dividerTopResistance(5, 2.5, 10_000), 10_000)
+  assert.throws(() => dividerTopResistance(3.3, 5, 10_000), /输出电压小于输入电压/)
 })

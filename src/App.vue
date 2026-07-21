@@ -5,6 +5,7 @@ import WaveformPanel from '@/components/WaveformPanel.vue'
 import RecordingPanel from '@/components/RecordingPanel.vue'
 import OhmsLawCalculator from '@/components/OhmsLawCalculator.vue'
 import OpAmpCalculator from '@/components/OpAmpCalculator.vue'
+import ResistorDividerCalculator from '@/components/ResistorDividerCalculator.vue'
 
 const ports = ref<SerialPortInfo[]>([])
 const selectedPath = ref('')
@@ -20,7 +21,7 @@ const parity = ref<'none' | 'even' | 'odd' | 'mark' | 'space'>('none')
 const flowControl = ref<'none' | 'rtscts'>('none')
 const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
-const activePage = ref<'terminal' | 'waveform' | 'recording' | 'ohms' | 'opamp'>('terminal')
+const activePage = ref<'terminal' | 'waveform' | 'recording' | 'ohms' | 'opamp' | 'divider'>('terminal')
 const settingsWarning = ref('')
 const connectionExpanded = ref(true)
 const signals = ref({ dtr: false, rts: false, brk: false })
@@ -231,11 +232,12 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     </main>
 
     <p v-if="settingsWarning" class="config-warning">{{ settingsWarning }}</p>
-    <nav class="page-tabs"><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'">串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'">实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'">数据记录</button><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'">欧姆定律</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'">运放计算</button></nav>
+    <nav class="page-tabs"><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'">串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'">实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'">数据记录</button><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'">欧姆定律</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'">运放计算</button><button :class="{ active: activePage === 'divider' }" @click="activePage = 'divider'">电阻分压</button></nav>
     <div class="page-content" :class="{ hidden: activePage !== 'terminal' }"><TerminalPanel :connected="isConnected" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'waveform' }"><WaveformPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'recording' }"><RecordingPanel :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'ohms' }"><OhmsLawCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'opamp' }"><OpAmpCalculator /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'divider' }"><ResistorDividerCalculator /></div>
   </div>
 </template>
