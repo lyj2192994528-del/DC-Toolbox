@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, type MenuItemConstructorOptions } from 'electron'
 import { join } from 'node:path'
 import { access, copyFile, mkdir, writeFile } from 'node:fs/promises'
 import iconv from 'iconv-lite'
@@ -190,6 +190,24 @@ function createWindow(): void {
   }
 }
 
+function installChineseMenu(): void {
+  const template: MenuItemConstructorOptions[] = [
+    { label: '文件', submenu: [{ label: '退出', accelerator: 'Alt+F4', click: () => app.quit() }] },
+    { label: '编辑', submenu: [
+      { label: '撤销', role: 'undo' }, { label: '重做', role: 'redo' }, { type: 'separator' },
+      { label: '剪切', role: 'cut' }, { label: '复制', role: 'copy' }, { label: '粘贴', role: 'paste' }, { label: '全选', role: 'selectAll' }
+    ] },
+    { label: '视图', submenu: [
+      { label: '重新加载', role: 'reload' }, { type: 'separator' },
+      { label: '放大', role: 'zoomIn' }, { label: '缩小', role: 'zoomOut' }, { label: '重置缩放', role: 'resetZoom' },
+      { type: 'separator' }, { label: '切换全屏', role: 'togglefullscreen' }
+    ] },
+    { label: '窗口', submenu: [{ label: '最小化', role: 'minimize' }, { label: '关闭', role: 'close' }] },
+    { label: '帮助', submenu: [{ label: '关于 DC Toolbox', click: () => { void dialog.showMessageBox({ type: 'info', title: '关于 DC Toolbox', message: 'DC Toolbox', detail: `嵌入式开发调试工具箱\n版本 ${app.getVersion()}` }) } }] }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 async function migrateLegacySettings(): Promise<void> {
   const newFile = join(app.getPath('userData'), 'settings.json')
   const oldFile = join(app.getPath('appData'), 'UartScope', 'settings.json')
@@ -205,6 +223,7 @@ app.whenReady().then(async () => {
   await migrateLegacySettings()
   settingsManager = new SettingsManager(join(app.getPath('userData'), 'settings.json'))
   await settingsManager.load()
+  installChineseMenu()
   createWindow()
 
   app.on('activate', () => {

@@ -38,6 +38,7 @@ const selectedPort = computed(() => ports.value.find((port) => port.path === sel
 const isConnected = computed(() => connectionState.value === 'connected')
 const isBusy = computed(() => connectionState.value === 'connecting')
 const baudRate = computed(() => Number(baudRateText.value))
+const isSerialPage = computed(() => ['terminal', 'waveform', 'recording'].includes(activePage.value))
 const baudRateError = computed(() => {
   if (!/^\d+$/.test(baudRateText.value)) return '波特率只能输入正整数。'
   if (baudRate.value < 50 || baudRate.value > 4_000_000) return '波特率范围是 50～4000000。'
@@ -188,7 +189,16 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
       <span class="status-pill" :class="{ online: isConnected, danger: connectionState === 'error' }">● {{ connectionMessage }}</span>
     </header>
 
-    <main class="panel connection-panel">
+    <div class="toolbox-layout">
+      <aside class="tool-sidebar">
+        <div class="sidebar-heading"><strong>工具导航</strong><span>6 个工具</span></div>
+        <section class="tool-group"><h3>通信与数据</h3><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'"><span>终</span>串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'"><span>波</span>实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'"><span>录</span>数据记录</button></section>
+        <section class="tool-group"><h3>开发计算</h3><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'"><span>Ω</span>欧姆定律</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'"><span>Av</span>运放计算</button><button :class="{ active: activePage === 'divider' }" @click="activePage = 'divider'"><span>÷</span>电阻分压</button></section>
+        <div class="sidebar-footer">后续工具会按类别继续加入这里</div>
+      </aside>
+
+      <main class="tool-workspace">
+    <section v-if="isSerialPage" class="panel connection-panel">
       <div class="card-heading compact-connection-heading">
         <div><h2>串口连接</h2><p>{{ statusMessage }} · 打开串口后配置将被锁定</p></div>
         <div class="connection-heading-actions"><div v-if="isConnected" class="signal-controls" aria-label="流控信号"><span>流控信号</span><button v-for="name in (['dtr', 'rts', 'brk'] as const)" :key="name" class="signal-button" :class="{ active: signals[name] }" @click="toggleSignal(name)">{{ name === 'brk' ? 'Break' : name.toUpperCase() }}</button></div><button class="soft-button" @click="connectionExpanded = !connectionExpanded">{{ connectionExpanded ? '收起参数' : '展开参数' }}</button><button class="refresh-button" type="button" :disabled="isScanning || isConnected || isBusy" @click="refreshPorts">{{ isScanning ? '扫描中…' : '刷新串口' }}</button></div>
@@ -229,15 +239,16 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
         <span>请插入 USB 转串口设备，然后点击“刷新串口”。</span>
       </div>
       <p v-if="signalError" class="field-error">{{ signalError }}</p>
-    </main>
+    </section>
 
     <p v-if="settingsWarning" class="config-warning">{{ settingsWarning }}</p>
-    <nav class="page-tabs"><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'">串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'">实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'">数据记录</button><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'">欧姆定律</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'">运放计算</button><button :class="{ active: activePage === 'divider' }" @click="activePage = 'divider'">电阻分压</button></nav>
     <div class="page-content" :class="{ hidden: activePage !== 'terminal' }"><TerminalPanel :connected="isConnected" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'waveform' }"><WaveformPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'recording' }"><RecordingPanel :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'ohms' }"><OhmsLawCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'opamp' }"><OpAmpCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'divider' }"><ResistorDividerCalculator /></div>
+      </main>
+    </div>
   </div>
 </template>

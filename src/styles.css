@@ -18,9 +18,10 @@ body {
 button, select, input { font: inherit; }
 
 .app-shell {
-  width: min(1480px, calc(100vw - 40px));
-  margin: 0 auto;
-  padding: 22px 0 32px;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 18px 20px 28px;
 }
 
 .app-header, .card-heading {
@@ -30,7 +31,7 @@ button, select, input { font: inherit; }
   gap: 24px;
 }
 
-.app-header { margin-bottom: 20px; }
+.app-header { margin-bottom: 16px; padding: 0 4px; }
 
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 5px; color: #152033; font-size: 34px; line-height: 1.2; }
@@ -67,6 +68,20 @@ h2 { margin-bottom: 7px; color: #152033; font-size: 21px; }
 .page-tabs button:hover { color: #176fd1; background: #f5f9fd; }
 .page-tabs button.active { color: #176fd1; background: #fff; box-shadow: 0 2px 8px rgb(31 53 84 / 8%); }
 .page-content.hidden { display: none; }
+
+.toolbox-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); align-items: start; gap: 16px; }
+.tool-sidebar { position: sticky; top: 16px; display: flex; flex-direction: column; max-height: calc(100vh - 32px); min-height: 520px; padding: 14px 10px; overflow: auto; border: 1px solid #e4eaf1; border-radius: 16px; background: #fff; box-shadow: 0 5px 18px rgb(31 53 84 / 6%); }
+.sidebar-heading { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px 13px; border-bottom: 1px solid #edf0f4; }
+.sidebar-heading strong { font-size: 15px; }
+.sidebar-heading span { color: #8490a4; font-size: 11px; }
+.tool-group { margin-top: 15px; }
+.tool-group h3 { margin: 0 9px 7px; color: #95a0b1; font-size: 11px; font-weight: 650; letter-spacing: .08em; }
+.tool-group button { display: flex; width: 100%; min-width: 0; align-items: center; gap: 9px; margin-top: 3px; padding: 9px 10px; border-radius: 9px; color: #526176; background: transparent; font-size: 13px; font-weight: 600; text-align: left; }
+.tool-group button:hover { color: #176fd1; background: #f0f6fd; }
+.tool-group button.active { color: #176fd1; background: #e9f3ff; }
+.tool-group button > span { display: inline-grid; width: 27px; height: 27px; flex: 0 0 27px; place-items: center; border-radius: 7px; color: #176fd1; background: #dcecff; font: 700 11px "Microsoft YaHei UI", sans-serif; }
+.sidebar-footer { margin-top: auto; padding: 13px 9px 5px; border-top: 1px solid #edf0f4; color: #9aa4b3; font-size: 10px; line-height: 1.5; }
+.tool-workspace { min-width: 0; }
 
 .card-heading { margin-bottom: 24px; }
 .card-heading p { margin-bottom: 0; color: #8490a4; font-size: 14px; }
@@ -221,10 +236,15 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 @media (max-width: 880px) {
   .terminal-layout { grid-template-columns: 1fr; }
   .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .app-shell { width: calc(100vw - 20px); }
+  .app-shell { width: 100%; padding-inline: 10px; }
   .panel { padding: 20px; }
   .panel-toolbar, .card-heading { align-items: flex-start; flex-wrap: wrap; }
   .connection-heading-actions { flex-wrap: wrap; }
+  .toolbox-layout { grid-template-columns: 1fr; }
+  .tool-sidebar { position: static; display: block; min-height: 0; max-height: none; padding: 8px; overflow-x: auto; white-space: nowrap; }
+  .sidebar-heading, .sidebar-footer, .tool-group h3 { display: none; }
+  .tool-group { display: inline-flex; gap: 4px; margin: 0 6px 0 0; }
+  .tool-group button { width: auto; margin: 0; }
 }
 
 .waveform-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; }
