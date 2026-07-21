@@ -2,7 +2,7 @@ import { SerialPort } from 'serialport'
 
 const path = process.argv[2] ?? 'COM10'
 const baudRate = Number(process.argv[3] ?? 115200)
-const expected = Buffer.from([0x55, 0xaa, 0x00, 0x7f, 0x80, 0xff, ...Buffer.from('UartScope loopback\r\n')])
+const expected = Buffer.from([0x55, 0xaa, 0x00, 0x7f, 0x80, 0xff, ...Buffer.from('DC Toolbox loopback\r\n')])
 const received = []
 
 const port = new SerialPort({ path, baudRate, autoOpen: false })

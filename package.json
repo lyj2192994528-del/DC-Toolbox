@@ -1,7 +1,7 @@
 {
-  "name": "uart-scope",
+  "name": "dc-toolbox",
   "version": "0.1.0",
-  "description": "Windows 串口调试与实时波形显示工具",
+  "description": "面向嵌入式开发工程师的 Windows 调试工具箱",
   "author": "LYJ0807",
   "main": "out/main/index.js",
   "scripts": {
@@ -32,8 +32,8 @@
     "vue-tsc": "3.3.7"
   },
   "build": {
-    "appId": "com.lyj.uartscope",
-    "productName": "UartScope",
+    "appId": "com.lyj.dctoolbox",
+    "productName": "DC Toolbox",
     "electronDist": "node_modules/electron/dist",
     "directories": {
       "output": "artifacts"
@@ -67,7 +67,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "UartScope",
+      "shortcutName": "DC Toolbox",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
       "artifactName": "${productName}-${version}-${arch}-Setup.${ext}"

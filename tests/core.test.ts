@@ -4,6 +4,7 @@ import { RingBuffer } from '../src/buffers/RingBuffer.ts'
 import { TextProtocolParser } from '../src/parsers/TextProtocolParser.ts'
 import { parseHexInput } from '../src/utils/hex.ts'
 import { JustFloatParser } from '../src/parsers/JustFloatParser.ts'
+import { calculateOhmsLaw } from '../src/calculators/ohmsLaw.ts'
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])
@@ -68,4 +69,15 @@ test('JustFloat 支持拆包、粘包和丢字节后重新同步', () => {
   assert.equal(recovered.frames.length, 1)
   assert.deepEqual(recovered.frames[0], [7, 8, 9])
   assert.match(recovered.errors.join(' '), /丢弃了 2 个多余字节/)
+})
+
+test('欧姆定律计算器支持六种任意两项组合', () => {
+  assert.deepEqual(calculateOhmsLaw({ voltage: 12, current: 2 }).values, { voltage: 12, current: 2, resistance: 6, power: 24 })
+  assert.equal(calculateOhmsLaw({ voltage: 12, resistance: 6 }).values.current, 2)
+  assert.equal(calculateOhmsLaw({ voltage: 12, power: 24 }).values.resistance, 6)
+  assert.equal(calculateOhmsLaw({ current: 2, resistance: 6 }).values.power, 24)
+  assert.equal(calculateOhmsLaw({ current: 2, power: 24 }).values.voltage, 12)
+  assert.equal(calculateOhmsLaw({ resistance: 6, power: 24 }).values.voltage, 12)
+  assert.throws(() => calculateOhmsLaw({ voltage: 12 }), /正好输入两个/)
+  assert.throws(() => calculateOhmsLaw({ voltage: 0, current: 2 }), /大于 0/)
 })

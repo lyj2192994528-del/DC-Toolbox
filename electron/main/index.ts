@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { join } from 'node:path'
-import { writeFile } from 'node:fs/promises'
+import { access, copyFile, mkdir, writeFile } from 'node:fs/promises'
 import iconv from 'iconv-lite'
 import { SerialManager, type SerialOpenOptions } from './serial-manager'
 import { FileRecorder } from './file-recorder'
@@ -144,7 +144,7 @@ ipcMain.handle('record:stop', async () => {
 ipcMain.handle('export:csv', async (_event, csv: unknown) => {
   try {
     if (typeof csv !== 'string' || csv.length > 200_000_000) throw new Error('CSV 数据格式或大小无效。')
-    const result = await dialog.showSaveDialog({ title: '导出波形 CSV', defaultPath: `UartScope-${new Date().toISOString().slice(0, 10)}.csv`, filters: [{ name: 'CSV 文件', extensions: ['csv'] }] })
+    const result = await dialog.showSaveDialog({ title: '导出波形 CSV', defaultPath: `DC-Toolbox-${new Date().toISOString().slice(0, 10)}.csv`, filters: [{ name: 'CSV 文件', extensions: ['csv'] }] })
     if (result.canceled || !result.filePath) return { ok: true as const, canceled: true }
     await writeFile(result.filePath, `\uFEFF${csv}`, 'utf8')
     return { ok: true as const, canceled: false, filePath: result.filePath }
@@ -167,7 +167,7 @@ function createWindow(): void {
     minWidth: 720,
     minHeight: 520,
     show: false,
-    title: 'UartScope',
+    title: 'DC Toolbox',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -190,7 +190,19 @@ function createWindow(): void {
   }
 }
 
+async function migrateLegacySettings(): Promise<void> {
+  const newFile = join(app.getPath('userData'), 'settings.json')
+  const oldFile = join(app.getPath('appData'), 'UartScope', 'settings.json')
+  try { await access(newFile); return } catch { /* 新配置不存在时尝试迁移 */ }
+  try {
+    await access(oldFile)
+    await mkdir(app.getPath('userData'), { recursive: true })
+    await copyFile(oldFile, newFile)
+  } catch { /* 没有旧配置时使用默认值 */ }
+}
+
 app.whenReady().then(async () => {
+  await migrateLegacySettings()
   settingsManager = new SettingsManager(join(app.getPath('userData'), 'settings.json'))
   await settingsManager.load()
   createWindow()

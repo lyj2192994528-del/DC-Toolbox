@@ -272,3 +272,32 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .record-help { margin-top: 20px; padding: 16px; border-radius: 12px; color: #667287; background: #f8fafd; font-size: 13px; }
 .record-help p { margin: 7px 0 0; line-height: 1.7; }
 .config-warning { padding: 11px 14px; border-radius: 10px; color: #9a5b00; background: #fff4dc; font-size: 13px; }
+
+.ohms-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr); gap: 18px; }
+.known-count { padding: 7px 11px; border-radius: 999px; color: #667287; background: #edf1f6; font-size: 12px; }
+.known-count.ready { color: #08734d; background: #dff8ed; }
+.ohms-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.ohms-field { margin: 0; }
+.ohms-field > span { display: block; margin-bottom: 8px; }
+.value-with-unit { display: grid; grid-template-columns: minmax(0, 1fr) 92px; }
+.value-with-unit input { border-radius: 11px 0 0 11px; }
+.value-with-unit select { border-left: 0; border-radius: 0 11px 11px 0; }
+.ohms-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+.formula-panel { display: flex; flex-direction: column; }
+.formula-wheel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 18px; border-radius: 16px; color: #176fd1; background: #edf5ff; text-align: center; }
+.formula-center { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden; border: 1px solid #bcd8f6; border-radius: 12px; background: #fff; }
+.formula-center > * { padding: 12px; border-right: 1px solid #d7e7f8; }
+.formula-center > *:last-child { border-right: 0; }
+.formula-wheel p { margin: 0; padding: 9px; border-radius: 9px; background: rgb(255 255 255 / 75%); font-weight: 650; }
+.ohms-results { margin-top: 18px; }
+.ohms-results h3 { margin: 0 0 10px; }
+.ohms-results dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; overflow: hidden; border: 1px solid #e5ebf2; border-radius: 12px; background: #e5ebf2; }
+.ohms-results dl div { padding: 11px; background: #f8fafd; }
+.ohms-results dt { color: #8490a4; font-size: 11px; }
+.ohms-results dd { margin: 5px 0 0; color: #176fd1; font-size: 17px; font-weight: 700; }
+.ohms-results p, .ohms-help { margin: 14px 0 0; color: #667287; font-size: 12px; line-height: 1.7; }
+.ohms-help { padding: 14px; border-radius: 12px; background: #f8fafd; }
+.ohms-help p { margin: 6px 0 0; }
+
+@media (max-width: 980px) { .ohms-layout { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .ohms-fields { grid-template-columns: 1fr; } }

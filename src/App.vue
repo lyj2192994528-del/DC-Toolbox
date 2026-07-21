@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import TerminalPanel from '@/components/TerminalPanel.vue'
 import WaveformPanel from '@/components/WaveformPanel.vue'
 import RecordingPanel from '@/components/RecordingPanel.vue'
+import OhmsLawCalculator from '@/components/OhmsLawCalculator.vue'
 
 const ports = ref<SerialPortInfo[]>([])
 const selectedPath = ref('')
@@ -18,7 +19,7 @@ const parity = ref<'none' | 'even' | 'odd' | 'mark' | 'space'>('none')
 const flowControl = ref<'none' | 'rtscts'>('none')
 const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
-const activePage = ref<'terminal' | 'waveform' | 'recording'>('terminal')
+const activePage = ref<'terminal' | 'waveform' | 'recording' | 'ohms'>('terminal')
 const settingsWarning = ref('')
 const connectionExpanded = ref(true)
 const signals = ref({ dtr: false, rts: false, brk: false })
@@ -179,8 +180,8 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
   <div class="app-shell">
     <header class="app-header">
       <div>
-        <h1>UartScope</h1>
-        <p class="subtitle">Windows 串口调试与实时波形助手</p>
+        <h1>DC Toolbox</h1>
+        <p class="subtitle">嵌入式开发调试工具箱</p>
       </div>
       <span class="status-pill" :class="{ online: isConnected, danger: connectionState === 'error' }">● {{ connectionMessage }}</span>
     </header>
@@ -229,9 +230,10 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     </main>
 
     <p v-if="settingsWarning" class="config-warning">{{ settingsWarning }}</p>
-    <nav class="page-tabs"><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'">串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'">实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'">数据记录</button></nav>
+    <nav class="page-tabs"><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'">串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'">实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'">数据记录</button><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'">欧姆定律</button></nav>
     <div class="page-content" :class="{ hidden: activePage !== 'terminal' }"><TerminalPanel :connected="isConnected" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'waveform' }"><WaveformPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'recording' }"><RecordingPanel :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'ohms' }"><OhmsLawCalculator /></div>
   </div>
 </template>

@@ -1,6 +1,6 @@
-# UartScope
+# DC Toolbox
 
-面向嵌入式开发的 Windows 串口调试与实时波形助手。使用 Electron、Vue 3、TypeScript 和 SerialPort 构建。
+面向嵌入式开发工程师的 Windows 开发调试工具箱。当前包含串口终端、实时波形和数据记录模块，使用 Electron、Vue 3、TypeScript 和 SerialPort 构建。
 
 ## 已完成功能
 
@@ -12,6 +12,7 @@
 - ASCII、HEX、BIN、DEC 多格式发送；20 条起步、最多 100 条的可扩展顺序循环发送
 - 接收支持自适应/固定空闲超时分帧，也可按 LF、CR 或 CRLF 分帧换行
 - DTR、RTS、Break 流控信号控制
+- 欧姆定律计算器：在电压、电流、电阻、功率中任意输入两个，计算其余两个并支持常用工程单位
 - CSV、NamedData、JustFloat 三种实时波形协议
 - 最多 16 通道，1～50000 点缓存/显示，滚轮缩放、拖动、通道显隐、改名、颜色、统计和截图
 - 原始串口数据记录（BIN + JSON 元数据）与波形 CSV 导出
@@ -51,7 +52,7 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 
 ## 发布文件
 
-- `artifacts/UartScope-0.1.0-x64-Setup.exe`：Windows 安装程序
-- `artifacts/UartScope-0.1.0-x64-Portable.exe`：免安装便携版
+- `artifacts/DC Toolbox-0.1.0-x64-Setup.exe`：Windows 安装程序
+- `artifacts/DC Toolbox-0.1.0-x64-Portable.exe`：免安装便携版
 
 当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。

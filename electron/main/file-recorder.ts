@@ -23,8 +23,8 @@ export class FileRecorder {
     if (this.stream) throw new Error('原始数据记录已经在运行。')
     await mkdir(directory, { recursive: true })
     const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-    const filePath = join(directory, `UartScope-${stamp}.bin`)
-    const metadataPath = join(directory, `UartScope-${stamp}.json`)
+    const filePath = join(directory, `DC-Toolbox-${stamp}.bin`)
+    const metadataPath = join(directory, `DC-Toolbox-${stamp}.json`)
     await writeFile(metadataPath, JSON.stringify({ createdAt: new Date().toISOString(), serial: serialSummary, rawFile: filePath }, null, 2), 'utf8')
 
     const stream = createWriteStream(filePath, { flags: 'wx' })

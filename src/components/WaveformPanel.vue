@@ -199,7 +199,7 @@ function saveScreenshot(): void {
   const canvas = canvasRef.value
   if (!canvas) return
   const link = document.createElement('a')
-  link.download = `UartScope-waveform-${new Date().toISOString().replace(/[:.]/g, '-')}.png`
+  link.download = `DC-Toolbox-waveform-${new Date().toISOString().replace(/[:.]/g, '-')}.png`
   link.href = canvas.toDataURL('image/png'); link.click()
 }
 
