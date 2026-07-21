@@ -5,6 +5,7 @@ import { TextProtocolParser } from '../src/parsers/TextProtocolParser.ts'
 import { parseHexInput } from '../src/utils/hex.ts'
 import { JustFloatParser } from '../src/parsers/JustFloatParser.ts'
 import { calculateOhmsLaw } from '../src/calculators/ohmsLaw.ts'
+import { calculateNonInverting, feedbackResistanceForGain, groundResistanceForGain } from '../src/calculators/opAmp.ts'
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])
@@ -80,4 +81,12 @@ test('欧姆定律计算器支持六种任意两项组合', () => {
   assert.equal(calculateOhmsLaw({ resistance: 6, power: 24 }).values.voltage, 12)
   assert.throws(() => calculateOhmsLaw({ voltage: 12 }), /正好输入两个/)
   assert.throws(() => calculateOhmsLaw({ voltage: 0, current: 2 }), /大于 0/)
+})
+
+test('同相运放计算增益、输出限幅并支持反算电阻', () => {
+  assert.deepEqual(calculateNonInverting(10_000, 10_000, 0.5, 0, 3.3), { gain: 2, idealOutput: 1, actualOutput: 1, clipped: false })
+  assert.deepEqual(calculateNonInverting(10_000, 100_000, 0.5, 0, 3.3), { gain: 11, idealOutput: 5.5, actualOutput: 3.3, clipped: true })
+  assert.equal(feedbackResistanceForGain(10_000, 3), 20_000)
+  assert.equal(groundResistanceForGain(20_000, 3), 10_000)
+  assert.throws(() => feedbackResistanceForGain(10_000, 1), /大于 1/)
 })
