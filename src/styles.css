@@ -372,3 +372,26 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .load-note { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; color: #667287; background: #f8fafd; font-size: 12px; line-height: 1.65; }
 .divider-schematic-panel img { display: block; width: auto; max-width: 100%; height: min(520px, 58vh); margin: 0 auto; border: 1px solid #e4e9ef; border-radius: 12px; background: #fff; object-fit: contain; }
 @media (max-width: 1050px) { .divider-layout { grid-template-columns: 1fr; } }
+
+.power-layout { display: grid; grid-template-columns: minmax(520px, 1.25fr) minmax(300px, 0.75fr); gap: 18px; }
+.power-mode-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 5px; border-radius: 12px; background: #eef2f7; }
+.power-mode-tabs button { min-width: 0; padding: 9px 7px; color: #667287; background: transparent; font-size: 12px; }
+.power-mode-tabs button:hover { color: #176fd1; background: #f7fbff; }
+.power-mode-tabs button.active { color: #176fd1; background: #fff; box-shadow: 0 2px 8px rgb(31 53 84 / 8%); }
+.power-section-title { margin: 20px 0 10px; font-size: 14px; }
+.power-targets { margin-bottom: 16px; }
+.power-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.power-input-grid label { margin: 0; }
+.power-input-grid label > span { display: block; margin-bottom: 8px; }
+.resistive-source { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.resistive-source select { width: 180px; padding: 9px 12px; }
+.power-guide-panel { text-align: center; }
+.power-symbol { display: grid; width: 150px; height: 150px; margin: 24px auto; place-content: center; border: 13px solid #dcebfb; border-radius: 50%; color: #176fd1; background: #f5faff; box-shadow: inset 0 0 0 2px #176fd1; }
+.power-symbol strong { font: 800 56px/1 Consolas, monospace; }
+.power-symbol span { margin-top: 6px; color: #77839a; font-size: 10px; letter-spacing: .16em; }
+.power-formula { padding: 15px 12px; border-radius: 12px; color: #176fd1; background: #edf5ff; font: 700 16px Consolas, monospace; }
+.power-help, .power-note { margin-top: 16px; padding: 15px; border-radius: 12px; color: #667287; background: #f8fafd; font-size: 12px; line-height: 1.7; text-align: left; }
+.power-help p, .power-note p { margin: 6px 0 0; }
+.power-note { color: #7c641e; background: #fff9e9; }
+@media (max-width: 1050px) { .power-layout { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .power-mode-tabs { grid-template-columns: 1fr 1fr; } .power-input-grid { grid-template-columns: 1fr; } }

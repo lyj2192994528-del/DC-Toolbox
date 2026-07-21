@@ -7,6 +7,7 @@ import { JustFloatParser } from '../src/parsers/JustFloatParser.ts'
 import { calculateOhmsLaw } from '../src/calculators/ohmsLaw.ts'
 import { calculateNonInverting, feedbackResistanceForGain, groundResistanceForGain } from '../src/calculators/opAmp.ts'
 import { calculateDivider, dividerBottomResistance, dividerInputVoltage, dividerTopResistance } from '../src/calculators/resistorDivider.ts'
+import { calculateAcPower, calculateDcPower, calculateEfficiency, calculateResistivePower } from '../src/calculators/power.ts'
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])
@@ -100,4 +101,16 @@ test('电阻分压计算器支持输出、输入与上下臂电阻反算', () =>
   assert.equal(dividerBottomResistance(5, 2.5, 10_000), 10_000)
   assert.equal(dividerTopResistance(5, 2.5, 10_000), 10_000)
   assert.throws(() => dividerTopResistance(3.3, 5, 10_000), /输出电压小于输入电压/)
+})
+
+test('功率计算器支持直流、阻性、单相、三相和效率反算', () => {
+  assert.equal(calculateDcPower('power', { voltage: 12, current: 2 }), 24)
+  assert.equal(calculateDcPower('current', { power: 24, voltage: 12 }), 2)
+  assert.equal(calculateResistivePower('power', { voltage: 12, resistance: 6 }), 24)
+  assert.equal(calculateResistivePower('resistance', { current: 2, power: 24 }), 6)
+  assert.equal(calculateAcPower(1, 'power', { voltage: 220, current: 10, powerFactor: 0.8 }), 1760)
+  assert.ok(Math.abs(calculateAcPower(3, 'current', { power: 11_000, voltage: 380, powerFactor: 0.8 }) - 11_000 / (Math.sqrt(3) * 380 * 0.8)) < 1e-9)
+  assert.equal(calculateEfficiency('outputPower', { inputPower: 100, efficiency: 90 }), 90)
+  assert.equal(calculateEfficiency('efficiency', { inputPower: 100, outputPower: 90 }), 90)
+  assert.throws(() => calculateAcPower(1, 'power', { voltage: 220, current: 1, powerFactor: 1.2 }), /不超过 1/)
 })
