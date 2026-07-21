@@ -395,3 +395,21 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .power-note { color: #7c641e; background: #fff9e9; }
 @media (max-width: 1050px) { .power-layout { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .power-mode-tabs { grid-template-columns: 1fr 1fr; } .power-input-grid { grid-template-columns: 1fr; } }
+
+.network-layout { display: grid; grid-template-columns: minmax(520px, 1.2fr) minmax(320px, 0.8fr); gap: 18px; }
+.network-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 14px; padding: 5px; border-radius: 12px; background: #eef2f7; }
+.network-mode-tabs button { color: #667287; background: transparent; }
+.network-mode-tabs button.active { color: #176fd1; background: #fff; box-shadow: 0 2px 8px rgb(31 53 84 / 8%); }
+.network-targets { margin-bottom: 14px; }
+.network-total-field { max-width: 420px; margin-bottom: 16px; }
+.network-total-field > span { display: block; margin-bottom: 8px; }
+.network-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 11px 0; border-top: 1px solid #edf0f4; }
+.network-toolbar span { margin-left: auto; color: #8490a4; font-size: 11px; }
+.resistor-list { max-height: 390px; padding-right: 4px; overflow: auto; }
+.resistor-row { display: grid; grid-template-columns: 22px 42px minmax(100px, 1fr) 88px 34px; align-items: center; gap: 8px; margin-top: 7px; }
+.resistor-row input[type="checkbox"] { width: auto; margin: 0; }
+.resistor-row input, .resistor-row select { min-width: 0; padding: 9px 10px; }
+.resistor-row .row-delete { min-width: 34px; padding: 8px; color: #bc3434; background: #fff0f0; }
+.network-schematic-panel img { display: block; width: 100%; height: min(510px, 58vh); border: 1px solid #e4e9ef; border-radius: 12px; background: #fffdfa; object-fit: contain; }
+@media (max-width: 1050px) { .network-layout { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .resistor-row { grid-template-columns: 22px 36px minmax(80px, 1fr) 76px 34px; gap: 5px; } .network-toolbar span { width: 100%; margin-left: 0; } }

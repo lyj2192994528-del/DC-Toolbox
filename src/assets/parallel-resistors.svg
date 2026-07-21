@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420">
+  <rect width="520" height="420" rx="20" fill="#fffdfa"/>
+  <g fill="none" stroke="#159447" stroke-width="5"><path d="M85 110h350M85 300h350M125 110v55M125 245v55M260 110v55M260 245v55M395 110v55M395 245v55"/></g>
+  <g fill="#fff" stroke="#a51414" stroke-width="5"><rect x="103" y="165" width="44" height="80"/><rect x="238" y="165" width="44" height="80"/><rect x="373" y="165" width="44" height="80"/></g>
+  <g fill="#0d25bf" font-family="Arial,sans-serif"><text x="220" y="55" font-size="25">VIN+</text><text x="155" y="205" font-size="24">R1</text><text x="290" y="205" font-size="24">R2</text><text x="425" y="205" font-size="24">Rn</text><text x="155" y="234" font-size="24">?</text><text x="290" y="234" font-size="24">?</text><text x="425" y="234" font-size="24">?</text><text x="222" y="400" font-size="25">GND</text></g>
+  <g fill="#a51414" stroke="#a51414"><circle cx="260" cy="110" r="10"/><circle cx="260" cy="300" r="10"/></g>
+  <g stroke="#a51414" stroke-width="5"><path d="M236 72h48M224 320h72M234 332h52M244 344h32"/></g>
+</svg>

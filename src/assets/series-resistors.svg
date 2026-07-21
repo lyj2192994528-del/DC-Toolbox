@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 500">
+  <rect width="420" height="500" rx="20" fill="#fffdfa"/>
+  <g fill="none" stroke="#159447" stroke-width="5"><path d="M210 54v45M210 169v55M210 294v55M210 419v28"/></g>
+  <g fill="#fff" stroke="#a51414" stroke-width="5"><rect x="188" y="99" width="44" height="70"/><rect x="188" y="224" width="44" height="70"/><rect x="188" y="349" width="44" height="70"/></g>
+  <g fill="#0d25bf" font-family="Arial,sans-serif"><text x="165" y="38" font-size="25">VIN+</text><text x="250" y="140" font-size="24">R1</text><text x="250" y="265" font-size="24">R2</text><text x="250" y="390" font-size="24">Rn</text><text x="250" y="416" font-size="24">?</text><text x="164" y="492" font-size="25">GND</text></g>
+  <g stroke="#a51414" stroke-width="5"><path d="M186 54h48M174 450h72M184 462h52M194 474h32"/></g>
+</svg>

@@ -8,6 +8,7 @@ import { calculateOhmsLaw } from '../src/calculators/ohmsLaw.ts'
 import { calculateNonInverting, feedbackResistanceForGain, groundResistanceForGain } from '../src/calculators/opAmp.ts'
 import { calculateDivider, dividerBottomResistance, dividerInputVoltage, dividerTopResistance } from '../src/calculators/resistorDivider.ts'
 import { calculateAcPower, calculateDcPower, calculateEfficiency, calculateResistivePower } from '../src/calculators/power.ts'
+import { calculateEquivalentResistance, solveMissingResistance } from '../src/calculators/resistorNetwork.ts'
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])
@@ -113,4 +114,13 @@ test('功率计算器支持直流、阻性、单相、三相和效率反算', ()
   assert.equal(calculateEfficiency('outputPower', { inputPower: 100, efficiency: 90 }), 90)
   assert.equal(calculateEfficiency('efficiency', { inputPower: 100, outputPower: 90 }), 90)
   assert.throws(() => calculateAcPower(1, 'power', { voltage: 220, current: 1, powerFactor: 1.2 }), /不超过 1/)
+})
+
+test('串并联电阻计算器支持多电阻等效值与缺失电阻反算', () => {
+  assert.equal(calculateEquivalentResistance('series', [1_000, 2_000, 3_000]), 6_000)
+  assert.ok(Math.abs(calculateEquivalentResistance('parallel', [1_000, 2_000]) - 666.6666666667) < 1e-7)
+  assert.equal(solveMissingResistance('series', 10_000, [2_000, 3_000]), 5_000)
+  assert.equal(solveMissingResistance('parallel', 500, [1_000, 2_000]), 2_000)
+  assert.throws(() => calculateEquivalentResistance('series', [1_000]), /至少选择并填写两个/)
+  assert.throws(() => solveMissingResistance('parallel', 2_000, [1_000]), /必须小于/)
 })
