@@ -161,8 +161,8 @@ ipcMain.handle('settings:set', async (_event, value: PersistedSettings) => {
 function createWindow(): void {
   const savedBounds = settingsManager.get().window
   const mainWindow = new BrowserWindow({
-    width: savedBounds?.width ?? 1180,
-    height: savedBounds?.height ?? 800,
+    width: Math.max(savedBounds?.width ?? 1440, 1280),
+    height: Math.max(savedBounds?.height ?? 900, 800),
     x: savedBounds?.x,
     y: savedBounds?.y,
     minWidth: 720,
@@ -177,7 +177,11 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.once('ready-to-show', () => mainWindow.show())
+  mainWindow.once('ready-to-show', () => {
+    // 工具数量增加后优先使用完整桌面空间，用户仍可点击“还原”调整大小。
+    mainWindow.maximize()
+    mainWindow.show()
+  })
   mainWindow.on('close', () => {
     const bounds = mainWindow.getBounds()
     const current = settingsManager.get()

@@ -4,6 +4,7 @@ import { CapacitanceConverter, CapacitorNetworkCalculator, LedResistorCalculator
 import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
 import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
+import appIconUrl from '@/assets/app-icon.svg'
 
 const ports = ref<SerialPortInfo[]>([])
 const selectedPath = ref('')
@@ -24,9 +25,13 @@ const settingsWarning = ref('')
 const connectionExpanded = ref(true)
 const signals = ref({ dtr: false, rts: false, brk: false })
 const signalError = ref('')
+const showSplash = ref(true)
+const showWelcome = ref(false)
+const hideWelcomeNextTime = ref(false)
 let settingsCache: PersistedSettings | undefined
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+let splashTimer: ReturnType<typeof setTimeout> | undefined
 let reconnecting = false
 
 const baudRates = [300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000, 230400, 256000, 460800, 500000, 512000, 921600, 1000000, 1500000, 2000000]
@@ -137,6 +142,22 @@ function scheduleReconnect(): void {
   }, 2000)
 }
 
+/** 关闭启动欢迎窗口；用户勾选后，后续启动不再自动弹出。 */
+function closeWelcome(): void {
+  if (hideWelcomeNextTime.value) localStorage.setItem('dc-toolbox-hide-welcome', '1')
+  else localStorage.removeItem('dc-toolbox-hide-welcome')
+  showWelcome.value = false
+}
+
+/** 启动动画正常结束或备用计时到达时，都统一从这里进入欢迎页。 */
+function finishSplash(): void {
+  if (!showSplash.value) return
+  showSplash.value = false
+  showWelcome.value = localStorage.getItem('dc-toolbox-hide-welcome') !== '1'
+  if (splashTimer) clearTimeout(splashTimer)
+  splashTimer = undefined
+}
+
 let removeStatusListener: (() => void) | undefined
 
 watch([selectedPath, baudRateText, dataBits, stopBits, parity, flowControl, customBaudRates], () => {
@@ -152,6 +173,8 @@ watch([selectedPath, baudRateText, dataBits, stopBits, parity, flowControl, cust
 })
 
 onMounted(async () => {
+  // 启动动画完成后再决定是否显示欢迎窗口，避免两个浮层同时出现。
+  splashTimer = setTimeout(finishSplash, 2600)
   removeStatusListener = window.uartScope.onSerialStatus((status) => {
     connectionState.value = status.state === 'error' ? 'error' : status.state
     connectionMessage.value = status.message
@@ -174,11 +197,37 @@ onMounted(async () => {
   await refreshPorts()
 })
 
-onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeout(reconnectTimer) })
+onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeout(reconnectTimer); if (splashTimer) clearTimeout(splashTimer) })
 </script>
 
 <template>
   <div class="app-shell">
+    <div v-if="showSplash" class="splash-screen" aria-label="DC Toolbox 正在启动" @animationend.self="finishSplash">
+      <div class="splash-glow"></div>
+      <div class="splash-card">
+        <img :src="appIconUrl" alt="DC Toolbox 软件图标">
+        <h1>{{ PROJECT_INFO.productName }}</h1>
+        <p>嵌入式开发调试工具箱</p>
+        <div class="splash-progress"><span></span></div>
+        <strong>v{{ PROJECT_INFO.version }}</strong>
+      </div>
+    </div>
+    <div v-if="showWelcome" class="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title" @click.self="closeWelcome">
+      <section class="welcome-dialog">
+        <button class="welcome-close" aria-label="关闭欢迎窗口" @click="closeWelcome">×</button>
+        <div class="welcome-brand">
+          <div class="welcome-logo">DC</div>
+          <div><span>WELCOME</span><h2 id="welcome-title">{{ PROJECT_INFO.fullName }}</h2><p>免费开放的 Windows 嵌入式开发调试工具箱</p></div>
+        </div>
+        <div class="welcome-contact-grid">
+          <div><span>作者邮箱</span><strong>{{ PROJECT_INFO.email }}</strong></div>
+          <div><span>QQ 交流群</span><strong>{{ PROJECT_INFO.qqGroup }}</strong><small>{{ PROJECT_INFO.qqGroupName }}</small></div>
+          <div><span>GitHub 仓库</span><strong>{{ PROJECT_INFO.githubUrl || '待添加' }}</strong></div>
+        </div>
+        <div class="welcome-group-description"><strong>交流群介绍</strong><p>{{ PROJECT_INFO.qqGroupDescription }}</p></div>
+        <div class="welcome-actions"><label><input v-model="hideWelcomeNextTime" type="checkbox"> 启动时不再显示</label><button @click="activePage = 'about'; closeWelcome()">查看项目信息</button><button class="welcome-primary" @click="closeWelcome">进入工具箱</button></div>
+      </section>
+    </div>
     <header class="app-header">
       <div>
         <h1>DC Toolbox</h1>
