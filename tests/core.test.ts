@@ -9,6 +9,8 @@ import { calculateNonInverting, feedbackResistanceForGain, groundResistanceForGa
 import { calculateDivider, dividerBottomResistance, dividerInputVoltage, dividerTopResistance } from '../src/calculators/resistorDivider.ts'
 import { calculateAcPower, calculateDcPower, calculateEfficiency, calculateResistivePower } from '../src/calculators/power.ts'
 import { calculateEquivalentResistance, solveMissingResistance } from '../src/calculators/resistorNetwork.ts'
+import { calculateEquivalentCapacitance, capacitanceCode, solveMissingCapacitance } from '../src/calculators/capacitance.ts'
+import { calculateLedResistor } from '../src/calculators/ledResistor.ts'
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])
@@ -123,4 +125,22 @@ test('串并联电阻计算器支持多电阻等效值与缺失电阻反算', ()
   assert.equal(solveMissingResistance('parallel', 500, [1_000, 2_000]), 2_000)
   assert.throws(() => calculateEquivalentResistance('series', [1_000]), /至少选择并填写两个/)
   assert.throws(() => solveMissingResistance('parallel', 2_000, [1_000]), /必须小于/)
+})
+
+test('串并联电容与电容代码换算正确', () => {
+  assert.equal(calculateEquivalentCapacitance('parallel', [1e-6, 2e-6]), 3e-6)
+  assert.ok(Math.abs(calculateEquivalentCapacitance('series', [1e-6, 2e-6]) - 2e-6 / 3) < 1e-18)
+  assert.ok(Math.abs(solveMissingCapacitance('parallel', 5e-6, [2e-6, 1e-6]) - 2e-6) < 1e-18)
+  assert.ok(Math.abs(solveMissingCapacitance('series', 0.5e-6, [1e-6, 2e-6]) - 2e-6) < 1e-18)
+  assert.equal(capacitanceCode(100e-9), '104')
+  assert.equal(capacitanceCode(4.7e-9), '472')
+})
+
+test('LED 限流计算推荐不超过目标电流的 E24 电阻和安全功率', () => {
+  const result = calculateLedResistor(5, 2, 0.01, 1)
+  assert.equal(result.resistance, 300)
+  assert.equal(result.recommendedResistance, 300)
+  assert.equal(result.actualCurrent, 0.01)
+  assert.equal(result.recommendedPowerRating, 0.125)
+  assert.throws(() => calculateLedResistor(5, 2, 0.01, 3), /必须大于/)
 })

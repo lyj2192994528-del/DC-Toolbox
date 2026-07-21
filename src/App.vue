@@ -8,6 +8,9 @@ import OpAmpCalculator from '@/components/OpAmpCalculator.vue'
 import ResistorDividerCalculator from '@/components/ResistorDividerCalculator.vue'
 import PowerCalculator from '@/components/PowerCalculator.vue'
 import ResistorNetworkCalculator from '@/components/ResistorNetworkCalculator.vue'
+import CapacitorNetworkCalculator from '@/components/CapacitorNetworkCalculator.vue'
+import CapacitanceConverter from '@/components/CapacitanceConverter.vue'
+import LedResistorCalculator from '@/components/LedResistorCalculator.vue'
 
 const ports = ref<SerialPortInfo[]>([])
 const selectedPath = ref('')
@@ -23,7 +26,7 @@ const parity = ref<'none' | 'even' | 'odd' | 'mark' | 'space'>('none')
 const flowControl = ref<'none' | 'rtscts'>('none')
 const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
-const activePage = ref<'terminal' | 'waveform' | 'recording' | 'ohms' | 'opamp' | 'divider' | 'power' | 'network'>('terminal')
+const activePage = ref<'terminal' | 'waveform' | 'recording' | 'ohms' | 'opamp' | 'divider' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led'>('terminal')
 const settingsWarning = ref('')
 const connectionExpanded = ref(true)
 const signals = ref({ dtr: false, rts: false, brk: false })
@@ -193,9 +196,9 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
 
     <div class="toolbox-layout">
       <aside class="tool-sidebar">
-        <div class="sidebar-heading"><strong>工具导航</strong><span>8 个工具</span></div>
+        <div class="sidebar-heading"><strong>工具导航</strong><span>11 个工具</span></div>
         <section class="tool-group"><h3>通信与数据</h3><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'"><span>终</span>串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'"><span>波</span>实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'"><span>录</span>数据记录</button></section>
-        <section class="tool-group"><h3>开发计算</h3><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'"><span>Ω</span>欧姆定律</button><button :class="{ active: activePage === 'power' }" @click="activePage = 'power'"><span>P</span>功率计算</button><button :class="{ active: activePage === 'network' }" @click="activePage = 'network'"><span>R∥</span>串并联电阻</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'"><span>Av</span>运放计算</button><button :class="{ active: activePage === 'divider' }" @click="activePage = 'divider'"><span>÷</span>电阻分压</button></section>
+        <section class="tool-group"><h3>开发计算</h3><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'"><span>Ω</span>欧姆定律</button><button :class="{ active: activePage === 'power' }" @click="activePage = 'power'"><span>P</span>功率计算</button><button :class="{ active: activePage === 'network' }" @click="activePage = 'network'"><span>R∥</span>串并联电阻</button><button :class="{ active: activePage === 'capacitors' }" @click="activePage = 'capacitors'"><span>C∥</span>串并联电容</button><button :class="{ active: activePage === 'capconvert' }" @click="activePage = 'capconvert'"><span>μF</span>电容换算</button><button :class="{ active: activePage === 'led' }" @click="activePage = 'led'"><span>LED</span>LED 限流</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'"><span>Av</span>运放计算</button><button :class="{ active: activePage === 'divider' }" @click="activePage = 'divider'"><span>÷</span>电阻分压</button></section>
         <div class="sidebar-footer">后续工具会按类别继续加入这里</div>
       </aside>
 
@@ -252,6 +255,9 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     <div class="page-content" :class="{ hidden: activePage !== 'divider' }"><ResistorDividerCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'power' }"><PowerCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'network' }"><ResistorNetworkCalculator /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'capacitors' }"><CapacitorNetworkCalculator /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'capconvert' }"><CapacitanceConverter /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'led' }"><LedResistorCalculator /></div>
       </main>
     </div>
   </div>
