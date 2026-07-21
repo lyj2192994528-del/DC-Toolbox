@@ -1,16 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import TerminalPanel from '@/components/TerminalPanel.vue'
-import WaveformPanel from '@/components/WaveformPanel.vue'
-import RecordingPanel from '@/components/RecordingPanel.vue'
-import OhmsLawCalculator from '@/components/OhmsLawCalculator.vue'
-import OpAmpCalculator from '@/components/OpAmpCalculator.vue'
-import ResistorDividerCalculator from '@/components/ResistorDividerCalculator.vue'
-import PowerCalculator from '@/components/PowerCalculator.vue'
-import ResistorNetworkCalculator from '@/components/ResistorNetworkCalculator.vue'
-import CapacitorNetworkCalculator from '@/components/CapacitorNetworkCalculator.vue'
-import CapacitanceConverter from '@/components/CapacitanceConverter.vue'
-import LedResistorCalculator from '@/components/LedResistorCalculator.vue'
+import { CapacitanceConverter, CapacitorNetworkCalculator, LedResistorCalculator, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, WaveformPanel } from '@/tools'
+import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
+import AboutPanel from '@/components/AboutPanel.vue'
+import { PROJECT_INFO } from '../shared/project-info'
 
 const ports = ref<SerialPortInfo[]>([])
 const selectedPath = ref('')
@@ -26,7 +19,7 @@ const parity = ref<'none' | 'even' | 'odd' | 'mark' | 'space'>('none')
 const flowControl = ref<'none' | 'rtscts'>('none')
 const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
-const activePage = ref<'terminal' | 'waveform' | 'recording' | 'ohms' | 'opamp' | 'divider' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led'>('terminal')
+const activePage = ref<ToolPageId | 'about'>('terminal')
 const settingsWarning = ref('')
 const connectionExpanded = ref(true)
 const signals = ref({ dtr: false, rts: false, brk: false })
@@ -196,10 +189,10 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
 
     <div class="toolbox-layout">
       <aside class="tool-sidebar">
-        <div class="sidebar-heading"><strong>工具导航</strong><span>11 个工具</span></div>
-        <section class="tool-group"><h3>通信与数据</h3><button :class="{ active: activePage === 'terminal' }" @click="activePage = 'terminal'"><span>终</span>串口终端</button><button :class="{ active: activePage === 'waveform' }" @click="activePage = 'waveform'"><span>波</span>实时波形</button><button :class="{ active: activePage === 'recording' }" @click="activePage = 'recording'"><span>录</span>数据记录</button></section>
-        <section class="tool-group"><h3>开发计算</h3><button :class="{ active: activePage === 'ohms' }" @click="activePage = 'ohms'"><span>Ω</span>欧姆定律</button><button :class="{ active: activePage === 'power' }" @click="activePage = 'power'"><span>P</span>功率计算</button><button :class="{ active: activePage === 'network' }" @click="activePage = 'network'"><span>R∥</span>串并联电阻</button><button :class="{ active: activePage === 'capacitors' }" @click="activePage = 'capacitors'"><span>C∥</span>串并联电容</button><button :class="{ active: activePage === 'capconvert' }" @click="activePage = 'capconvert'"><span>μF</span>电容换算</button><button :class="{ active: activePage === 'led' }" @click="activePage = 'led'"><span>LED</span>LED 限流</button><button :class="{ active: activePage === 'opamp' }" @click="activePage = 'opamp'"><span>Av</span>运放计算</button><button :class="{ active: activePage === 'divider' }" @click="activePage = 'divider'"><span>÷</span>电阻分压</button></section>
-        <div class="sidebar-footer">后续工具会按类别继续加入这里</div>
+        <div class="sidebar-heading"><strong>工具导航</strong><span>{{ toolCount }} 个工具</span></div>
+        <section v-for="group in toolGroups" :key="group.title" class="tool-group"><h3>{{ group.title }}</h3><button v-for="tool in group.tools" :key="tool.id" :class="{ active: activePage === tool.id }" @click="activePage = tool.id"><span>{{ tool.icon }}</span>{{ tool.label }}</button></section>
+        <button class="about-nav-button" :class="{ active: activePage === 'about' }" @click="activePage = 'about'"><span>i</span>关于与联系</button>
+        <div class="sidebar-footer">QQ群 {{ PROJECT_INFO.qqGroup }}<br>{{ PROJECT_INFO.qqGroupName }}</div>
       </aside>
 
       <main class="tool-workspace">
@@ -258,7 +251,9 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     <div class="page-content" :class="{ hidden: activePage !== 'capacitors' }"><CapacitorNetworkCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'capconvert' }"><CapacitanceConverter /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'led' }"><LedResistorCalculator /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'about' }"><AboutPanel /></div>
       </main>
     </div>
+    <footer class="project-promo-bar"><strong>{{ PROJECT_INFO.fullName }}</strong><span>邮箱：{{ PROJECT_INFO.email }}</span><span>QQ群：{{ PROJECT_INFO.qqGroup }} · {{ PROJECT_INFO.qqGroupName }}</span><span>GitHub：{{ PROJECT_INFO.githubUrl || '待添加' }}</span></footer>
   </div>
 </template>

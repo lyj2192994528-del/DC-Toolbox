@@ -5,6 +5,7 @@ import iconv from 'iconv-lite'
 import { SerialManager, type SerialOpenOptions } from './serial-manager'
 import { FileRecorder } from './file-recorder'
 import { SettingsManager, type PersistedSettings } from './settings-manager'
+import { PROJECT_INFO } from '../../shared/project-info'
 
 function broadcastSerialStatus(status: unknown): void {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -203,7 +204,7 @@ function installChineseMenu(): void {
       { type: 'separator' }, { label: '切换全屏', role: 'togglefullscreen' }
     ] },
     { label: '窗口', submenu: [{ label: '最小化', role: 'minimize' }, { label: '关闭', role: 'close' }] },
-    { label: '帮助', submenu: [{ label: '关于 DC Toolbox', click: () => { void dialog.showMessageBox({ type: 'info', title: '关于 DC Toolbox', message: 'DC Toolbox', detail: `嵌入式开发调试工具箱\n版本 ${app.getVersion()}` }) } }] }
+    { label: '帮助', submenu: [{ label: '关于与联系', click: () => { void dialog.showMessageBox({ type: 'info', title: '关于 DC Toolbox', message: PROJECT_INFO.fullName, detail: `版本 ${app.getVersion()}\n作者邮箱：${PROJECT_INFO.email}\nQQ群：${PROJECT_INFO.qqGroup}\n群名：${PROJECT_INFO.qqGroupName}\nGitHub：${PROJECT_INFO.githubUrl || '待添加'}` }) } }] }
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }

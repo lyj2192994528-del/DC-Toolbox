@@ -8,6 +8,7 @@ function positive(value: number, label: string): number {
 export function calculateEquivalentCapacitance(mode: CapacitorNetworkMode, capacitances: number[]): number {
   if (capacitances.length < 2) throw new Error('请至少选择并填写两个电容。')
   const values = capacitances.map((value, index) => positive(value, `C${index + 1}`))
+  // 电容与电阻规则相反：并联直接相加，串联计算倒数和。
   return mode === 'parallel'
     ? values.reduce((sum, value) => sum + value, 0)
     : 1 / values.reduce((sum, value) => sum + 1 / value, 0)
@@ -31,6 +32,7 @@ export function capacitanceCode(farads: number): string {
   positive(farads, '电容值')
   const picofarads = farads / 1e-12
   if (picofarads < 10 || picofarads >= 1e11) return '不适用'
+  // 三位代码以 pF 为单位：前两位有效数字，第三位表示追加零的个数。
   const exponent = Math.floor(Math.log10(picofarads)) - 1
   const firstTwo = Math.round(picofarads / 10 ** exponent)
   if (firstTwo < 10 || firstTwo > 99 || exponent < 0 || exponent > 9) return '不适用'

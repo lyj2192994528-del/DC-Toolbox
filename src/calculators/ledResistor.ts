@@ -27,8 +27,10 @@ export function calculateLedResistor(supplyVoltage: number, forwardVoltage: numb
   if (!Number.isInteger(ledCount) || ledCount < 1 || ledCount > 100) throw new Error('LED 数量必须是 1～100 的整数。')
   const totalForwardVoltage = forwardVoltage * ledCount
   if (supplyVoltage <= totalForwardVoltage) throw new Error('供电电压必须大于所有串联 LED 的正向压降总和。')
+  // 电阻承担电源电压减去全部 LED 正向压降后的剩余电压。
   const voltageDrop = supplyVoltage - totalForwardVoltage
   const resistance = voltageDrop / current
+  // 标准阻值只向上取，避免实际 LED 电流超过用户设定值。
   const recommendedResistance = nextE24Resistance(resistance)
   const actualCurrent = voltageDrop / recommendedResistance
   const resistorPower = actualCurrent ** 2 * recommendedResistance

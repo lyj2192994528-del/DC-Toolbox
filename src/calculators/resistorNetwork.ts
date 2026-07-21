@@ -8,6 +8,7 @@ function validateResistance(value: number, label: string): number {
 export function calculateEquivalentResistance(mode: ResistorNetworkMode, resistances: number[]): number {
   if (resistances.length < 2) throw new Error('请至少选择并填写两个电阻。')
   const valid = resistances.map((value, index) => validateResistance(value, `R${index + 1}`))
+  // 串联直接求和；并联先计算电导（1/R）之和，再取倒数。
   return mode === 'series'
     ? valid.reduce((sum, value) => sum + value, 0)
     : 1 / valid.reduce((sum, value) => sum + 1 / value, 0)
