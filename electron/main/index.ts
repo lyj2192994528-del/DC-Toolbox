@@ -245,23 +245,47 @@ function createWindow(splashState: SplashState): void {
   }
 }
 
-function installChineseMenu(): void {
+type AppLanguage = 'zh-CN' | 'en-US'
+
+async function setApplicationLanguage(language: AppLanguage): Promise<void> {
+  const current = settingsManager.get()
+  await settingsManager.update({ ...current, language })
+  installApplicationMenu(language)
+  broadcast('app:language', language)
+}
+
+function installApplicationMenu(language: AppLanguage): void {
+  const en = language === 'en-US'
+  const chooseLanguage = (value: AppLanguage): void => { void setApplicationLanguage(value) }
   const template: MenuItemConstructorOptions[] = [
-    { label: '文件', submenu: [{ label: '退出', accelerator: 'Alt+F4', click: () => app.quit() }] },
-    { label: '编辑', submenu: [
-      { label: '撤销', role: 'undo' }, { label: '重做', role: 'redo' }, { type: 'separator' },
-      { label: '剪切', role: 'cut' }, { label: '复制', role: 'copy' }, { label: '粘贴', role: 'paste' }, { label: '全选', role: 'selectAll' }
+    { label: en ? 'File' : '文件', submenu: [{ label: en ? 'Exit' : '退出', accelerator: 'Alt+F4', click: () => app.quit() }] },
+    { label: en ? 'Edit' : '编辑', submenu: [
+      { label: en ? 'Undo' : '撤销', role: 'undo' }, { label: en ? 'Redo' : '重做', role: 'redo' }, { type: 'separator' },
+      { label: en ? 'Cut' : '剪切', role: 'cut' }, { label: en ? 'Copy' : '复制', role: 'copy' }, { label: en ? 'Paste' : '粘贴', role: 'paste' }, { label: en ? 'Select All' : '全选', role: 'selectAll' }
     ] },
-    { label: '视图', submenu: [
-      { label: '重新加载', role: 'reload' }, { type: 'separator' },
-      { label: '放大', role: 'zoomIn' }, { label: '缩小', role: 'zoomOut' }, { label: '重置缩放', role: 'resetZoom' },
-      { type: 'separator' }, { label: '切换全屏', role: 'togglefullscreen' }
+    { label: en ? 'View' : '视图', submenu: [
+      { label: en ? 'Reload' : '重新加载', role: 'reload' }, { type: 'separator' },
+      { label: en ? 'Zoom In' : '放大', role: 'zoomIn' }, { label: en ? 'Zoom Out' : '缩小', role: 'zoomOut' }, { label: en ? 'Reset Zoom' : '重置缩放', role: 'resetZoom' },
+      { type: 'separator' },
+      { label: en ? 'Language' : '语言', submenu: [
+        { label: '简体中文', type: 'radio', checked: language === 'zh-CN', click: () => chooseLanguage('zh-CN') },
+        { label: 'English', type: 'radio', checked: language === 'en-US', click: () => chooseLanguage('en-US') }
+      ] },
+      { type: 'separator' }, { label: en ? 'Toggle Full Screen' : '切换全屏', role: 'togglefullscreen' }
     ] },
-    { label: '窗口', submenu: [{ label: '最小化', role: 'minimize' }, { label: '关闭', role: 'close' }] },
-    { label: '帮助', submenu: [{ label: '关于与联系', click: () => { void dialog.showMessageBox({ type: 'info', title: '关于 DC Toolbox', message: PROJECT_INFO.fullName, detail: `版本 ${app.getVersion()}\n作者邮箱：${PROJECT_INFO.email}\nQQ群：${PROJECT_INFO.qqGroup}\n群名：${PROJECT_INFO.qqGroupName}\nGitHub：${PROJECT_INFO.githubUrl || '待添加'}` }) } }] }
+    { label: en ? 'Window' : '窗口', submenu: [{ label: en ? 'Minimize' : '最小化', role: 'minimize' }, { label: en ? 'Close' : '关闭', role: 'close' }] },
+    { label: en ? 'Help' : '帮助', submenu: [{ label: en ? 'About & Contact' : '关于与联系', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'About DC Toolbox' : '关于 DC Toolbox', message: en ? 'DC Toolbox — Embedded Development & Debugging Toolkit' : PROJECT_INFO.fullName, detail: en ? `Version ${app.getVersion()}\nEmail: ${PROJECT_INFO.email}\nQQ Group: ${PROJECT_INFO.qqGroup}\nGitHub: ${PROJECT_INFO.githubUrl || 'Coming soon'}` : `版本 ${app.getVersion()}\n作者邮箱：${PROJECT_INFO.email}\nQQ群：${PROJECT_INFO.qqGroup}\n群名：${PROJECT_INFO.qqGroupName}\nGitHub：${PROJECT_INFO.githubUrl || '待添加'}` }) } }] }
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
+
+ipcMain.handle('app:set-language', async (_event, value: unknown) => {
+  try {
+    if (value !== 'zh-CN' && value !== 'en-US') throw new Error('不支持的语言。')
+    await setApplicationLanguage(value)
+    return { ok: true as const }
+  } catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
 
 async function migrateLegacySettings(): Promise<void> {
   const newFile = join(app.getPath('userData'), 'settings.json')
@@ -279,7 +303,7 @@ app.whenReady().then(async () => {
   await migrateLegacySettings()
   settingsManager = new SettingsManager(join(app.getPath('userData'), 'settings.json'))
   await settingsManager.load()
-  installChineseMenu()
+  installApplicationMenu(settingsManager.get().language)
   createWindow(splashState)
 
   app.on('activate', () => {

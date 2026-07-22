@@ -12,6 +12,14 @@ import { calculateEquivalentResistance, solveMissingResistance } from '../src/ca
 import { calculateEquivalentCapacitance, capacitanceCode, solveMissingCapacitance } from '../src/calculators/capacitance.ts'
 import { calculateLedResistor } from '../src/calculators/ledResistor.ts'
 import { calculateChecksum, convertIntegerBase, parseByteText } from '../src/calculators/dataTools.ts'
+import { MAX_RECEIVE_BATCH_BYTES, receiveFlushDelay } from '../src/buffers/receiveBatching.ts'
+
+test('连续高速串口数据即使没有空闲间隔也会在 100 ms 内刷新', () => {
+  assert.equal(receiveFlushDelay(1000, 1010, 20, 100), 20)
+  assert.equal(receiveFlushDelay(1000, 1095, 20, 100), 5)
+  assert.equal(receiveFlushDelay(1000, 1100, 20, 100), 0)
+  assert.equal(receiveFlushDelay(1000, 1001, 20, MAX_RECEIVE_BATCH_BYTES), 0)
+})
 
 test('进制转换支持四种进制、负数和超大整数', () => {
   assert.deepEqual(convertIntegerBase('FF', 16), { binary: '11111111', octal: '377', decimal: '255', hexadecimal: 'FF' })

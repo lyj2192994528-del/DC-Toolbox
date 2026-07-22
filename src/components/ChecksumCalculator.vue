@@ -1,7 +1,30 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { calculateChecksum, parseByteText, type ChecksumAlgorithm } from '@/calculators/dataTools'
-const inputMode=ref<'hex'|'ascii'>('hex'); const algorithm=ref<ChecksumAlgorithm>('crc16-modbus'); const input=ref('01 03 00 00 00 0A')
-const result=computed(()=>{try{const bytes=parseByteText(input.value,inputMode.value);const value=calculateChecksum(bytes,algorithm.value);const width=algorithm.value==='crc32'?8:algorithm.value.includes('16')?4:2;return{hex:value.toString(16).toUpperCase().padStart(width,'0'),decimal:value,bytes:bytes.length,error:''}}catch(error){return{hex:'—',decimal:0,bytes:0,error:error instanceof Error?error.message:String(error)}}})
+import { useI18n } from '@/i18n'
+
+const { language } = useI18n()
+const inputMode = ref<'hex' | 'ascii'>('hex')
+const algorithm = ref<ChecksumAlgorithm>('crc16-modbus')
+const input = ref('01 03 00 00 00 0A')
+const result = computed(() => {
+  try {
+    const bytes = parseByteText(input.value, inputMode.value)
+    const value = calculateChecksum(bytes, algorithm.value)
+    const width = algorithm.value === 'crc32' ? 8 : algorithm.value.includes('16') ? 4 : 2
+    return { hex: value.toString(16).toUpperCase().padStart(width, '0'), decimal: value, bytes: bytes.length, error: '' }
+  } catch (error) {
+    return { hex: '—', decimal: 0, bytes: 0, error: error instanceof Error ? error.message : String(error) }
+  }
+})
 </script>
-<template><section class="data-tool-layout"><div class="panel"><div class="panel-toolbar"><div><h2>CRC / 校验计算</h2><p>用于通信帧、固件数据和协议报文的常用校验计算</p></div><span class="tool-badge">{{ result.bytes }} 字节</span></div><div class="checksum-options"><label class="field"><span>输入格式</span><select v-model="inputMode"><option value="hex">HEX 字节</option><option value="ascii">ASCII / UTF-8</option></select></label><label class="field"><span>校验算法</span><select v-model="algorithm"><option value="sum8">SUM-8</option><option value="xor8">XOR-8</option><option value="crc8">CRC-8</option><option value="crc16-modbus">CRC-16/MODBUS</option><option value="crc16-ccitt">CRC-16/CCITT-FALSE</option><option value="crc32">CRC-32/ISO-HDLC</option></select></label></div><label class="field"><span>待计算数据</span><textarea v-model="input" rows="8" spellcheck="false" placeholder="HEX 示例：01 03 00 00 00 0A"></textarea></label><p v-if="result.error" class="error-message">{{ result.error }}</p><div v-else class="checksum-result"><span>计算结果</span><strong>0x{{ result.hex }}</strong><small>十进制：{{ result.decimal }}</small></div><p class="data-tool-tip">MODBUS CRC 在线路中通常按低字节在前发送，例如结果 CDC5 对应发送 C5 CD。</p></div></section></template>
+
+<template>
+  <section class="data-tool-layout"><div class="panel">
+    <div class="panel-toolbar"><div><h2>CRC / {{ language === 'en-US' ? 'Checksum Calculator' : '校验计算' }}</h2><p>{{ language === 'en-US' ? 'Common checksums for communication frames, firmware and protocol packets' : '用于通信帧、固件数据和协议报文的常用校验计算' }}</p></div><span class="tool-badge">{{ result.bytes }} {{ language === 'en-US' ? 'bytes' : '字节' }}</span></div>
+    <div class="checksum-options"><label class="field"><span>{{ language === 'en-US' ? 'Input format' : '输入格式' }}</span><select v-model="inputMode"><option value="hex">HEX</option><option value="ascii">ASCII / UTF-8</option></select></label><label class="field"><span>{{ language === 'en-US' ? 'Algorithm' : '校验算法' }}</span><select v-model="algorithm"><option value="sum8">SUM-8</option><option value="xor8">XOR-8</option><option value="crc8">CRC-8</option><option value="crc16-modbus">CRC-16/MODBUS</option><option value="crc16-ccitt">CRC-16/CCITT-FALSE</option><option value="crc32">CRC-32/ISO-HDLC</option></select></label></div>
+    <label class="field"><span>{{ language === 'en-US' ? 'Input data' : '待计算数据' }}</span><textarea v-model="input" rows="8" spellcheck="false" placeholder="01 03 00 00 00 0A"></textarea></label>
+    <p v-if="result.error" class="error-message">{{ result.error }}</p><div v-else class="checksum-result"><span>{{ language === 'en-US' ? 'Result' : '计算结果' }}</span><strong>0x{{ result.hex }}</strong><small>{{ language === 'en-US' ? 'Decimal' : '十进制' }}：{{ result.decimal }}</small></div>
+    <p class="data-tool-tip">{{ language === 'en-US' ? 'MODBUS CRC is normally transmitted low byte first; CDC5 is sent as C5 CD.' : 'MODBUS CRC 在线路中通常按低字节在前发送，例如结果 CDC5 对应发送 C5 CD。' }}</p>
+  </div></section>
+</template>

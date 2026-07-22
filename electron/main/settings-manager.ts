@@ -1,6 +1,7 @@
 import { readFile, rename, writeFile } from 'node:fs/promises'
 
 export interface PersistedSettings {
+  language: 'zh-CN' | 'en-US'
   serial: {
     path: string
     baudRate: string
@@ -14,6 +15,7 @@ export interface PersistedSettings {
 }
 
 export const defaultSettings: PersistedSettings = {
+  language: 'zh-CN',
   serial: { path: '', baudRate: '115200', dataBits: 8, stopBits: 1, parity: 'none', flowControl: 'none', customBaudRates: [] }
 }
 

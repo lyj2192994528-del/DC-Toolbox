@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { bytesToHex, parseHexInput } from '@/utils/hex'
+import { useI18n } from '@/i18n'
+import { receiveFlushDelay } from '@/buffers/receiveBatching'
+
+const { language, t } = useI18n()
 
 type Encoding = 'utf8' | 'gbk' | 'latin1'
 type Suffix = 'none' | 'lf' | 'cr' | 'lfcr' | 'crlf'
@@ -16,8 +20,8 @@ const sendText = ref('')
 const showTimestamp = ref(true)
 const autoLineBreak = ref(false)
 const autoScroll = ref(true)
-const receiveFraming = ref<'auto' | 'timeout' | 'lf' | 'cr' | 'crlf'>('auto')
-const receiveTimeoutText = ref('50')
+const receiveFraming = ref<'auto' | 'timeout' | 'lf' | 'cr' | 'crlf'>('timeout')
+const receiveTimeoutText = ref('20')
 const adaptiveTimeout = ref(35)
 const paused = ref(false)
 const searchText = ref('')
@@ -30,6 +34,7 @@ const sendHistory = ref<string[]>([])
 const quickCommands = ref(['AT', 'help', 'AA 55 01 02'])
 const entries = ref<DisplayEntry[]>([])
 const pendingEntries: DisplayEntry[] = []
+let pendingBytes = 0
 let nextRowId = 21
 const multiRows = ref(Array.from({ length: 20 }, (_, index) => ({ id: index + 1, enabled: index === 0, format: 'ascii' as SendFormat, text: '' })))
 const multiRunning = ref(false)
@@ -45,21 +50,31 @@ let rateTimerId: ReturnType<typeof setInterval> | undefined
 let removeDataListener: (() => void) | undefined
 let burstTimer: ReturnType<typeof setTimeout> | undefined
 let burstBytes: number[] = []
+let burstStartedAt = 0
 let lastReceiveAt = 0
 let averageChunkGap = 12
 const MAX_DISPLAY_BYTES = 200_000
+let displayedBytes = 0
 
 function appendEntry(entry: DisplayEntry): void {
   entries.value.push(entry)
-  let total = entries.value.reduce((sum, item) => sum + item.data.length, 0)
-  while (total > MAX_DISPLAY_BYTES && entries.value.length > 1) total -= entries.value.shift()!.data.length
+  displayedBytes += entry.data.length
+  while (displayedBytes > MAX_DISPLAY_BYTES && entries.value.length > 1) displayedBytes -= entries.value.shift()!.data.length
+}
+
+function queueEntry(entry: DisplayEntry): void {
+  if (!paused.value) { appendEntry(entry); return }
+  pendingEntries.push(entry)
+  pendingBytes += entry.data.length
+  while (pendingBytes > MAX_DISPLAY_BYTES && pendingEntries.length > 1) pendingBytes -= pendingEntries.shift()!.data.length
 }
 
 function flushBurst(): void {
   if (!burstBytes.length) return
   const entry = { time: new Date(), data: Uint8Array.from(burstBytes) }
   burstBytes = []
-  if (paused.value) pendingEntries.push(entry); else appendEntry(entry)
+  burstStartedAt = 0
+  queueEntry(entry)
 }
 
 function delimiterBytes(): number[] | null {
@@ -77,7 +92,7 @@ function flushDelimitedMessages(): void {
     if (delimiter.every((byte, offset) => burstBytes[index + offset] === byte)) {
       const message = burstBytes.slice(start, index + delimiter.length)
       const entry = { time: new Date(), data: Uint8Array.from(message) }
-      if (paused.value) pendingEntries.push(entry); else appendEntry(entry)
+      queueEntry(entry)
       index += delimiter.length
       start = index
     } else index += 1
@@ -95,18 +110,22 @@ function receiveData(data: Uint8Array): void {
     if (gap < 1000) averageChunkGap = averageChunkGap * 0.8 + gap * 0.2
   }
   lastReceiveAt = now
-  burstBytes.push(...data)
+  if (!burstBytes.length) burstStartedAt = now
+  for (const byte of data) burstBytes.push(byte)
   if (burstTimer) clearTimeout(burstTimer)
   if (delimiterBytes()) { flushDelimitedMessages(); return }
   const configured = Math.max(1, Math.min(5000, Number(receiveTimeoutText.value) || 50))
   adaptiveTimeout.value = Math.max(10, Math.min(500, Math.round(averageChunkGap * 3 + 5)))
   // 串口驱动可能把一次回包拆成 A + BC；等线路空闲后再作为一条消息显示。
-  burstTimer = setTimeout(flushBurst, receiveFraming.value === 'auto' ? adaptiveTimeout.value : configured)
+  const idleDelay = receiveFraming.value === 'auto' ? adaptiveTimeout.value : configured
+  const delay = receiveFlushDelay(burstStartedAt, now, idleDelay, burstBytes.length)
+  if (delay === 0) flushBurst()
+  else burstTimer = setTimeout(flushBurst, delay)
 }
 
 watch(receiveFraming, () => { if (burstTimer) clearTimeout(burstTimer); flushBurst() })
 
-watch(paused, (value) => { if (!value) for (const entry of pendingEntries.splice(0)) appendEntry(entry) })
+watch(paused, (value) => { if (!value) { for (const entry of pendingEntries.splice(0)) appendEntry(entry); pendingBytes = 0 } })
 
 function decode(data: Uint8Array): string {
   try { return new TextDecoder(encoding.value === 'utf8' ? 'utf-8' : encoding.value, { fatal: false }).decode(data) }
@@ -114,7 +133,7 @@ function decode(data: Uint8Array): string {
 }
 
 const terminalText = computed(() => entries.value.map((entry) => {
-  const stamp = showTimestamp.value ? `[${entry.time.toLocaleTimeString('zh-CN', { hour12: false })}.${String(entry.time.getMilliseconds()).padStart(3, '0')}] ` : ''
+  const stamp = showTimestamp.value ? `[${entry.time.toLocaleTimeString(language.value, { hour12: false })}.${String(entry.time.getMilliseconds()).padStart(3, '0')}] ` : ''
   const content = displayMode.value === 'hex' ? bytesToHex(entry.data) : decode(entry.data)
   return `${stamp}${content}${autoLineBreak.value || displayMode.value === 'hex' ? '\n' : ''}`
 }).join(''))
@@ -186,7 +205,12 @@ async function toggleTimer(): Promise<void> {
   if (!Number.isInteger(interval) || interval < 20 || interval > 86_400_000) { errorMessage.value = '定时周期必须是 20～86400000 毫秒之间的正整数。'; return }
   if (!(await sendOnce())) return
   timerRunning.value = true
-  timerId = setInterval(() => void sendOnce(), interval)
+  const scheduleNext = async (): Promise<void> => {
+    if (!timerRunning.value) return
+    if (!(await sendOnce())) return
+    if (timerRunning.value) timerId = setTimeout(() => void scheduleNext(), interval)
+  }
+  timerId = setTimeout(() => void scheduleNext(), interval)
 }
 
 function enabledMultiRows(): typeof multiRows.value { return multiRows.value.filter((row) => row.enabled && row.text) }
@@ -237,7 +261,7 @@ function stopAllTimers(): void {
   multiCurrentId.value = null
 }
 
-function clearReceive(): void { entries.value = []; pendingEntries.splice(0); burstBytes = [] }
+function clearReceive(): void { if (burstTimer) clearTimeout(burstTimer); burstTimer = undefined; entries.value = []; displayedBytes = 0; pendingEntries.splice(0); pendingBytes = 0; burstBytes = []; burstStartedAt = 0 }
 watch(() => props.connected, (connected) => { if (!connected) stopAllTimers() })
 
 onMounted(() => {
@@ -251,26 +275,26 @@ onBeforeUnmount(() => { stopAllTimers(); if (burstTimer) clearTimeout(burstTimer
   <section class="terminal-layout">
     <div class="panel receive-panel">
       <div class="panel-toolbar">
-        <div><h2>接收终端</h2><p>RX {{ receiveBytes }} B · {{ receiveRate }} B/s</p></div>
-        <div class="toolbar-actions"><select v-model="displayMode" class="compact-select"><option value="ascii">ASCII</option><option value="hex">HEX</option></select><select v-model="encoding" class="compact-select" title="字符编码"><option value="utf8">UTF-8</option><option value="gbk">GBK</option><option value="latin1">Latin-1</option></select><button class="soft-button" @click="paused = !paused">{{ paused ? '恢复显示' : '暂停显示' }}</button><button class="soft-button" @click="clearReceive">清空</button></div>
+        <div><h2>{{ t('terminal.receive') }}</h2><p>RX {{ receiveBytes }} B · {{ receiveRate }} B/s</p></div>
+        <div class="toolbar-actions"><select v-model="displayMode" class="compact-select"><option value="ascii">ASCII</option><option value="hex">HEX</option></select><select v-model="encoding" class="compact-select" :title="t('terminal.encoding')"><option value="utf8">UTF-8</option><option value="gbk">GBK</option><option value="latin1">Latin-1</option></select><button class="soft-button" @click="paused = !paused">{{ paused ? t('terminal.resume') : t('terminal.pause') }}</button><button class="soft-button" @click="clearReceive">{{ t('terminal.clear') }}</button></div>
       </div>
-      <div class="receive-options"><label><input v-model="showTimestamp" type="checkbox" /> 时间戳</label><label><input v-model="autoLineBreak" type="checkbox" /> 每条回包换行</label><label><input v-model="autoScroll" type="checkbox" /> 自动滚动</label><label class="framing-option">分帧<select v-model="receiveFraming"><option value="auto">自适应超时（{{ adaptiveTimeout }} ms）</option><option value="timeout">固定空闲超时</option><option value="lf">遇到 \n (LF)</option><option value="cr">遇到 \r (CR)</option><option value="crlf">遇到 \r\n (CR+LF)</option></select></label><label v-if="receiveFraming === 'timeout'" class="timeout-option"><input v-model="receiveTimeoutText" type="number" min="1" max="5000" /> ms</label><input v-model="searchText" class="search-input" placeholder="搜索文本" /><span v-if="searchText">{{ matchCount }} 处</span></div>
-      <pre ref="terminalRef" class="terminal-output">{{ terminalText || '等待接收串口数据…' }}</pre>
+      <div class="receive-options"><label><input v-model="showTimestamp" type="checkbox" /> {{ t('terminal.timestamp') }}</label><label><input v-model="autoLineBreak" type="checkbox" /> {{ t('terminal.lineBreak') }}</label><label><input v-model="autoScroll" type="checkbox" /> {{ t('terminal.autoScroll') }}</label><label class="framing-option">{{ t('terminal.framing') }}<select v-model="receiveFraming"><option value="auto">{{ t('terminal.autoTimeout', { ms: adaptiveTimeout }) }}</option><option value="timeout">{{ t('terminal.fixedTimeout') }}</option><option value="lf">{{ t('terminal.untilLf') }}</option><option value="cr">{{ t('terminal.untilCr') }}</option><option value="crlf">{{ t('terminal.untilCrlf') }}</option></select></label><label v-if="receiveFraming === 'timeout'" class="timeout-option"><input v-model="receiveTimeoutText" type="number" min="1" max="5000" /> ms</label><input v-model="searchText" class="search-input" :placeholder="t('terminal.search')" /><span v-if="searchText">{{ t('terminal.matches', { count: matchCount }) }}</span></div>
+      <pre ref="terminalRef" class="terminal-output">{{ terminalText || t('terminal.waiting') }}</pre>
     </div>
 
     <div class="panel send-panel">
-      <div class="panel-toolbar"><div><h2>发送数据</h2><p>TX {{ sendBytes }} B</p></div><select v-model="sendMode" class="compact-select"><option value="ascii">ASCII</option><option value="hex">HEX</option><option value="bin">BIN</option><option value="dec">DEC</option></select></div>
-      <textarea v-model="sendText" :placeholder="sendMode === 'hex' ? 'HEX：AA 55 01 02 或 AA550102' : sendMode === 'bin' ? 'BIN：01000001 01000010' : sendMode === 'dec' ? 'DEC：65 66 67' : '输入要发送的文本'"></textarea>
+      <div class="panel-toolbar"><div><h2>{{ t('terminal.send') }}</h2><p>TX {{ sendBytes }} B</p></div><select v-model="sendMode" class="compact-select"><option value="ascii">ASCII</option><option value="hex">HEX</option><option value="bin">BIN</option><option value="dec">DEC</option></select></div>
+      <textarea v-model="sendText" :placeholder="sendMode === 'hex' ? 'HEX: AA 55 01 02 / AA550102' : sendMode === 'bin' ? 'BIN: 01000001 01000010' : sendMode === 'dec' ? 'DEC: 65 66 67' : t('terminal.input')"></textarea>
       <div class="quick-commands"><button v-for="(command, index) in quickCommands" :key="command" class="command-chip" @click="useQuickCommand(command, index)">{{ command }}</button></div>
       <div class="send-option-grid">
-        <label>字符编码<select v-model="encoding" :disabled="sendMode === 'hex'"><option value="utf8">UTF-8</option><option value="gbk">GBK / GB2312</option><option value="latin1">Latin-1</option></select></label>
-        <label>追加回车换行<select v-model="suffix"><option value="none">无追加</option><option value="lf">\n (LF)</option><option value="cr">\r (CR)</option><option value="lfcr">\n\r (LF+CR)</option><option value="crlf">\r\n (CR+LF)</option></select></label>
-        <label>发送校验<select v-model="checksum"><option value="none">无校验</option><option value="sum8">SUM8</option><option value="xor8">XOR8</option><option value="crc16modbus">CRC16 Modbus</option></select></label>
+        <label>{{ t('terminal.encoding') }}<select v-model="encoding" :disabled="sendMode === 'hex'"><option value="utf8">UTF-8</option><option value="gbk">GBK / GB2312</option><option value="latin1">Latin-1</option></select></label>
+        <label>{{ t('terminal.suffix') }}<select v-model="suffix"><option value="none">{{ t('terminal.none') }}</option><option value="lf">\n (LF)</option><option value="cr">\r (CR)</option><option value="lfcr">\n\r (LF+CR)</option><option value="crlf">\r\n (CR+LF)</option></select></label>
+        <label>{{ t('terminal.checksum') }}<select v-model="checksum"><option value="none">{{ t('terminal.noChecksum') }}</option><option value="sum8">SUM8</option><option value="xor8">XOR8</option><option value="crc16modbus">CRC16 Modbus</option></select></label>
       </div>
-      <div class="send-controls"><button :disabled="!connected" @click="sendOnce">发送</button><button class="soft-button" @click="sendText = ''">清空输入</button></div>
-      <select v-if="sendHistory.length" class="history-select" @change="sendText = ($event.target as HTMLSelectElement).value"><option value="">发送历史（最近 20 条）</option><option v-for="item in sendHistory" :key="item" :value="item">{{ item }}</option></select>
-      <div class="timer-controls"><label>周期 <input v-model="intervalText" inputmode="numeric" /> ms</label><button :class="{ danger: timerRunning }" :disabled="!connected" @click="toggleTimer">{{ timerRunning ? '停止定时' : '定时发送' }}</button></div>
-      <details class="multi-send"><summary>多条顺序循环发送（{{ multiRows.length }} 条）</summary><div class="multi-toolbar"><button class="soft-button" @click="setAllRows(true)">全选</button><button class="soft-button" @click="setAllRows(false)">取消全选</button><button class="soft-button" :disabled="multiRows.length >= 100" @click="addRows(10)">增加 10 条</button><span>循环时每隔 {{ intervalText }} ms 只发送下一条</span></div><div class="multi-list"><div v-for="(row, index) in multiRows" :key="row.id" class="multi-row" :class="{ current: multiCurrentId === row.id }"><input v-model="row.enabled" type="checkbox" /><span>{{ index + 1 }}</span><select v-model="row.format"><option value="ascii">ASCII</option><option value="hex">HEX</option><option value="bin">BIN</option><option value="dec">DEC</option></select><input v-model="row.text" :placeholder="`第 ${index + 1} 条指令`" /><button class="soft-button" :disabled="!connected || !row.text" @click="sendValue(row.text, false, row.format)">发送</button><button class="row-delete" title="删除此条" :disabled="multiRunning" @click="removeRow(row.id)">×</button></div></div><div class="multi-actions"><button :disabled="!connected || multiRunning" @click="sendMultiOnce">按周期顺序发送一次</button><button :class="{ danger: multiRunning }" :disabled="!connected" @click="toggleMulti">{{ multiRunning ? '停止循环' : '开始顺序循环' }}</button></div></details>
+      <div class="send-controls"><button :disabled="!connected" @click="sendOnce">{{ t('terminal.sendButton') }}</button><button class="soft-button" @click="sendText = ''">{{ t('terminal.clearInput') }}</button></div>
+      <select v-if="sendHistory.length" class="history-select" @change="sendText = ($event.target as HTMLSelectElement).value"><option value="">{{ t('terminal.history') }}</option><option v-for="item in sendHistory" :key="item" :value="item">{{ item }}</option></select>
+      <div class="timer-controls"><label>{{ t('terminal.period') }} <input v-model="intervalText" inputmode="numeric" /> ms</label><button :class="{ danger: timerRunning }" :disabled="!connected" @click="toggleTimer">{{ timerRunning ? t('terminal.stopTimed') : t('terminal.timedSend') }}</button></div>
+      <details class="multi-send"><summary>{{ t('terminal.multi', { count: multiRows.length }) }}</summary><div class="multi-toolbar"><button class="soft-button" @click="setAllRows(true)">{{ t('terminal.selectAll') }}</button><button class="soft-button" @click="setAllRows(false)">{{ t('terminal.clearAll') }}</button><button class="soft-button" :disabled="multiRows.length >= 100" @click="addRows(10)">{{ t('terminal.add10') }}</button><span>{{ t('terminal.multiHint', { ms: intervalText }) }}</span></div><div class="multi-list"><div v-for="(row, index) in multiRows" :key="row.id" class="multi-row" :class="{ current: multiCurrentId === row.id }"><input v-model="row.enabled" type="checkbox" /><span>{{ index + 1 }}</span><select v-model="row.format"><option value="ascii">ASCII</option><option value="hex">HEX</option><option value="bin">BIN</option><option value="dec">DEC</option></select><input v-model="row.text" :placeholder="t('terminal.command', { index: index + 1 })" /><button class="soft-button" :disabled="!connected || !row.text" @click="sendValue(row.text, false, row.format)">{{ t('terminal.sendButton') }}</button><button class="row-delete" :title="t('terminal.delete')" :disabled="multiRunning" @click="removeRow(row.id)">×</button></div></div><div class="multi-actions"><button :disabled="!connected || multiRunning" @click="sendMultiOnce">{{ t('terminal.sendSequenceOnce') }}</button><button :class="{ danger: multiRunning }" :disabled="!connected" @click="toggleMulti">{{ multiRunning ? t('terminal.stopLoop') : t('terminal.startLoop') }}</button></div></details>
       <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
     </div>
   </section>

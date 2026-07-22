@@ -447,6 +447,10 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .welcome-brand span { color: #159cbb; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
 .welcome-brand h2 { margin: 8px 0 7px; font-size: 27px; }
 .welcome-brand p { margin: 0; color: #77839a; }
+.welcome-language { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.welcome-language strong { margin-right: auto; color: #667287; font-size: 13px; }
+.welcome-language button { padding: 8px 13px; color: #667287; background: #edf2f7; }
+.welcome-language button.active { color: #fff; background: #176fd1; box-shadow: 0 5px 14px rgb(23 111 209 / 20%); }
 .welcome-contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 28px; overflow: hidden; border: 1px solid #dce7f2; border-radius: 14px; background: #dce7f2; }
 .welcome-contact-grid div { min-width: 0; padding: 16px; background: #f7fbff; }
 .welcome-contact-grid span, .welcome-contact-grid small { display: block; color: #8490a4; font-size: 11px; }
