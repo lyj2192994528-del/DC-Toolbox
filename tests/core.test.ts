@@ -11,6 +11,23 @@ import { calculateAcPower, calculateDcPower, calculateEfficiency, calculateResis
 import { calculateEquivalentResistance, solveMissingResistance } from '../src/calculators/resistorNetwork.ts'
 import { calculateEquivalentCapacitance, capacitanceCode, solveMissingCapacitance } from '../src/calculators/capacitance.ts'
 import { calculateLedResistor } from '../src/calculators/ledResistor.ts'
+import { calculateChecksum, convertIntegerBase, parseByteText } from '../src/calculators/dataTools.ts'
+
+test('进制转换支持四种进制、负数和超大整数', () => {
+  assert.deepEqual(convertIntegerBase('FF', 16), { binary: '11111111', octal: '377', decimal: '255', hexadecimal: 'FF' })
+  assert.equal(convertIntegerBase('-1010', 2).decimal, '-10')
+  assert.equal(convertIntegerBase('18446744073709551615', 10).hexadecimal, 'FFFFFFFFFFFFFFFF')
+  assert.throws(() => convertIntegerBase('102', 2), /不是有效的 2 进制/)
+})
+
+test('CRC 与校验计算符合标准测试向量', () => {
+  const text = parseByteText('123456789', 'ascii')
+  assert.equal(calculateChecksum(text, 'crc8'), 0xf4)
+  assert.equal(calculateChecksum(text, 'crc16-modbus'), 0x4b37)
+  assert.equal(calculateChecksum(text, 'crc16-ccitt'), 0x29b1)
+  assert.equal(calculateChecksum(text, 'crc32'), 0xcbf43926)
+  assert.deepEqual([...parseByteText('AA 55 01', 'hex')], [0xaa, 0x55, 0x01])
+})
 
 test('HEX 支持空格和连续字符，并拒绝非法字符与半字节', () => {
   assert.deepEqual(parseHexInput('AA 55 01 02').bytes, [0xaa, 0x55, 0x01, 0x02])

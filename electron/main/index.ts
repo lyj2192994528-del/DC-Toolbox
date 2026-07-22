@@ -197,8 +197,8 @@ function createWindow(splashState: SplashState): void {
   const savedBounds = settingsManager.get().window
   const applicationIcon = join(app.getAppPath(), 'build', 'icon.png')
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 820,
+    width: 1360,
+    height: 900,
     x: savedBounds?.x,
     y: savedBounds?.y,
     minWidth: 1080,

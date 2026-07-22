@@ -479,3 +479,48 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .connection-panel .device-summary div { padding: 8px 11px; }
 .connection-panel .device-summary dt { margin-bottom: 2px; font-size: 10px; }
 .connection-panel .device-summary dd { font-size: 12px; }
+
+/* 默认首屏采用一行式串口摘要；需要修改参数时再展开完整配置。 */
+.connection-quick-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 9px; border-top: 1px solid #edf1f6; }
+.connection-quick-row div { display: flex; align-items: baseline; gap: 13px; min-width: 0; }
+.connection-quick-row strong { color: #162b46; font-size: 15px; }
+.connection-quick-row span { overflow: hidden; color: #7c899d; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.connection-quick-row .connect-button { min-width: 112px; }
+
+/* 数据类工具共用紧凑、可扩展的工作区样式。 */
+.data-tool-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.tool-badge, .planned-badge { padding: 7px 11px; border-radius: 999px; color: #176fd1; background: #edf5ff; font-size: 12px; font-weight: 700; }
+.planned-badge { color: #966300; background: #fff4d8; }
+.base-source, .checksum-options { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 14px; margin: 20px 0; }
+.base-source .field, .checksum-options .field { margin: 0; }
+.base-results { display: grid; gap: 8px; }
+.base-results > div { display: grid; grid-template-columns: 140px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e1e9f2; border-radius: 11px; background: #f8fbff; }
+.base-results span { color: #69778c; font-size: 12px; }
+.base-results code { overflow-wrap: anywhere; color: #176fd1; font: 700 15px Consolas, monospace; }
+.checksum-result { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 18px; margin-top: 16px; padding: 18px; border-radius: 13px; background: #edf6ff; }
+.checksum-result span { grid-row: 1 / 3; color: #718096; }
+.checksum-result strong { color: #176fd1; font: 800 30px Consolas, monospace; }
+.checksum-result small { color: #7c899d; }
+.data-tool-tip { margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; color: #667287; background: #f7f9fc; font-size: 12px; line-height: 1.7; }
+.csv-layout { display: grid; grid-template-columns: minmax(380px, .85fr) minmax(520px, 1.15fr); gap: 18px; }
+.csv-input { min-height: 390px; font: 13px/1.6 Consolas, monospace; }
+.csv-table-wrap { max-width: 100%; overflow: auto; }
+.csv-table-wrap table { width: 100%; margin-top: 18px; border-collapse: collapse; font-size: 12px; }
+.csv-table-wrap th, .csv-table-wrap td { padding: 11px; border-bottom: 1px solid #e5ebf2; text-align: right; }
+.csv-table-wrap th:first-child, .csv-table-wrap td:first-child { text-align: left; }
+.csv-table-wrap th { color: #718096; background: #f6f9fc; }
+.replay-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.replay-list { display: grid; gap: 6px; max-height: 300px; margin-top: 14px; overflow: auto; }
+.replay-list div { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 10px 12px; border-radius: 9px; background: #f6f8fb; }
+.replay-list div.active { color: #075ea9; background: #dff0ff; box-shadow: inset 3px 0 #176fd1; }
+.replay-list time { color: #8490a4; font-size: 11px; }
+.replay-list code { font-family: Consolas, monospace; }
+.capability-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+.capability-grid > div { display: grid; grid-template-columns: 38px 1fr; gap: 3px 11px; padding: 16px; border: 1px solid #e2eaf3; border-radius: 13px; background: #f8fbff; }
+.capability-grid span { grid-row: 1 / 3; display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; color: #176fd1; background: #e4f1ff; font-weight: 800; }
+.capability-grid small { color: #8793a5; }
+.capability-notice { margin-top: 18px; padding: 16px; border-radius: 12px; color: #59677b; background: #fff9ea; }
+.capability-notice strong { color: #936400; }
+.capability-notice p { margin: 6px 0 0; font-size: 12px; line-height: 1.8; }
+@media (max-width: 980px) { .csv-layout { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .base-source, .checksum-options, .capability-grid { grid-template-columns: 1fr; } .base-results > div { grid-template-columns: 1fr auto; } .base-results span { grid-column: 1 / -1; } .connection-quick-row { align-items: stretch; flex-direction: column; } }

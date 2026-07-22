@@ -1,14 +1,22 @@
 /** 工具 ID 是页面导航的稳定标识，发布后不要随意修改。 */
-export type ToolPageId = 'terminal' | 'waveform' | 'recording' | 'ohms' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led' | 'opamp' | 'divider'
+export type ToolPageId = 'terminal' | 'waveform' | 'recording' | 'replay' | 'ble' | 'usb' | 'networkProtocols' | 'baseConverter' | 'checksum' | 'csv' | 'ohms' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led' | 'opamp' | 'divider'
 
 export interface ToolDefinition { id: ToolPageId; label: string; icon: string }
 
-/** 新增工具时在所属分组增加一项，并创建 src/tools/<工具名>/index.ts。 */
 export const toolGroups: Array<{ title: string; tools: ToolDefinition[] }> = [
   { title: '通信与数据', tools: [
     { id: 'terminal', label: '串口终端', icon: '终' },
     { id: 'waveform', label: '实时波形', icon: '波' },
-    { id: 'recording', label: '数据记录', icon: '录' }
+    { id: 'recording', label: '数据记录', icon: '录' },
+    { id: 'replay', label: '记录与回放', icon: '▶' },
+    { id: 'ble', label: 'BLE', icon: 'B' },
+    { id: 'usb', label: 'USB / HID', icon: 'U' },
+    { id: 'networkProtocols', label: 'TCP / UDP / MQTT', icon: 'N' }
+  ] },
+  { title: '数据工具', tools: [
+    { id: 'baseConverter', label: '进制转换', icon: '10' },
+    { id: 'checksum', label: 'CRC / 校验', icon: 'CRC' },
+    { id: 'csv', label: 'CSV 分析', icon: 'CSV' }
   ] },
   { title: '开发计算', tools: [
     { id: 'ohms', label: '欧姆定律', icon: 'Ω' },

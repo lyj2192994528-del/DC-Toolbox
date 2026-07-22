@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { CapacitanceConverter, CapacitorNetworkCalculator, LedResistorCalculator, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, WaveformPanel } from '@/tools'
+import { BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ReplayPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, WaveformPanel } from '@/tools'
 import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
 import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
@@ -21,7 +21,7 @@ const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
 const activePage = ref<ToolPageId | 'about'>('terminal')
 const settingsWarning = ref('')
-const connectionExpanded = ref(true)
+const connectionExpanded = ref(false)
 const signals = ref({ dtr: false, rts: false, brk: false })
 const signalError = ref('')
 const showWelcome = ref(false)
@@ -228,6 +228,11 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
         <div class="connection-heading-actions"><div v-if="isConnected" class="signal-controls" aria-label="流控信号"><span>流控信号</span><button v-for="name in (['dtr', 'rts', 'brk'] as const)" :key="name" class="signal-button" :class="{ active: signals[name] }" @click="toggleSignal(name)">{{ name === 'brk' ? 'Break' : name.toUpperCase() }}</button></div><button class="soft-button" @click="connectionExpanded = !connectionExpanded">{{ connectionExpanded ? '收起参数' : '展开参数' }}</button><button class="refresh-button" type="button" :disabled="isScanning || isConnected || isBusy" @click="refreshPorts">{{ isScanning ? '扫描中…' : '刷新串口' }}</button></div>
       </div>
 
+      <div v-if="!connectionExpanded" class="connection-quick-row">
+        <div><strong>{{ selectedPath || '未选择串口' }}</strong><span>{{ baudRateText }} baud · {{ dataBits }}{{ parity[0].toUpperCase() }}{{ stopBits }} · {{ flowControl === 'rtscts' ? 'RTS/CTS' : '无流控' }}</span></div>
+        <button class="connect-button" type="button" :class="{ danger: isConnected }" :disabled="isBusy || (!isConnected && (!selectedPath || Boolean(baudRateError)))" @click="toggleConnection">{{ isBusy ? '连接中…' : isConnected ? '关闭串口' : '打开串口' }}</button>
+      </div>
+
       <div v-if="connectionExpanded" class="port-action-row">
         <label class="field port-field"><span>COM 端口</span><select v-model="selectedPath" :disabled="isScanning || ports.length === 0 || isConnected || isBusy">
           <option v-if="ports.length === 0" value="">暂无可用串口</option>
@@ -269,6 +274,13 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     <div class="page-content" :class="{ hidden: activePage !== 'terminal' }"><TerminalPanel :connected="isConnected" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'waveform' }"><WaveformPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'recording' }"><RecordingPanel :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'replay' }"><ReplayPanel /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'ble' }"><BlePanel kind="ble" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'usb' }"><UsbHidPanel kind="usb" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'networkProtocols' }"><NetworkProtocolsPanel kind="network" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'baseConverter' }"><BaseConverter /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'checksum' }"><ChecksumCalculator /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'csv' }"><CsvAnalyzer /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'ohms' }"><OhmsLawCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'opamp' }"><OpAmpCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'divider' }"><ResistorDividerCalculator /></div>

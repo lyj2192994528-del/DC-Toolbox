@@ -77,3 +77,4 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 - `artifacts/DC Toolbox-0.1.0-x64-Portable.exe`：免安装便携版
 
 当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。
+当前包含串口终端、实时波形、数据记录、记录回放、进制转换、CRC/校验、CSV 分析及常用电子计算工具。BLE、USB/HID、TCP/UDP/MQTT 已建立独立模块入口，等待接入真实 Windows 底层能力。
