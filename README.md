@@ -6,6 +6,20 @@
 
 > 完整的操作范围、输入格式和模块完成状态请参阅 [功能说明](docs/FEATURES.md)。
 
+## 界面预览
+
+| 串口终端 | 实时波形 |
+| --- | --- |
+| ![串口终端](docs/screenshots/serial-terminal.png) | ![实时波形](docs/screenshots/live-waveform.png) |
+
+| 进制转换 | 欧姆定律 |
+| --- | --- |
+| ![进制转换](docs/screenshots/base-converter.png) | ![欧姆定律](docs/screenshots/ohms-law.png) |
+
+### 电阻分压计算器
+
+![电阻分压计算器](docs/screenshots/voltage-divider.png)
+
 ## 联系与交流
 
 - 作者邮箱：`2192994528@qq.com`
