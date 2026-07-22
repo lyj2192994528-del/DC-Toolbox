@@ -31,6 +31,7 @@ type SerialStatusEvent =
   | { state: 'error'; message: string }
 
 interface RecorderStatus { recording: boolean; filePath?: string; bytesWritten: number; error?: string }
+interface VirtualPortStatus { installed: boolean; toolPath?: string; managerPath?: string; output: string; ports: string[]; warning: string }
 interface PersistedSettings {
   serial: { path: string; baudRate: string; dataBits: 5 | 6 | 7 | 8; stopBits: 1 | 1.5 | 2; parity: 'none' | 'even' | 'odd' | 'mark' | 'space'; flowControl: 'none' | 'rtscts'; customBaudRates: number[] }
   window?: { x?: number; y?: number; width: number; height: number }
@@ -53,5 +54,9 @@ interface Window {
     exportCsv: (csv: string) => Promise<{ ok: true; canceled: boolean; filePath?: string } | { ok: false; error: string }>
     getSettings: () => Promise<{ settings: PersistedSettings; warning: string }>
     setSettings: (settings: PersistedSettings) => Promise<{ ok: true } | { ok: false; error: string }>
+    getVirtualPortStatus: () => Promise<{ ok: true; status: VirtualPortStatus } | { ok: false; error: string }>
+    openVirtualPortManager: () => Promise<{ ok: true } | { ok: false; error: string }>
+    openVirtualPortFolder: () => Promise<{ ok: true } | { ok: false; error: string }>
+    openVirtualPortDownload: () => Promise<{ ok: true }>
   }
 }

@@ -78,3 +78,9 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 
 当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。
 当前包含串口终端、实时波形、数据记录、记录回放、进制转换、CRC/校验、CSV 分析及常用电子计算工具。BLE、USB/HID、TCP/UDP/MQTT 已建立独立模块入口，等待接入真实 Windows 底层能力。
+
+## 虚拟串口
+
+DC Toolbox 可以检测并打开已安装的 [com0com 官方项目](https://sourceforge.net/projects/com0com/) 管理工具，用虚拟端口对完成无硬件串口回环测试。com0com 是独立的第三方 GPLv2 内核驱动，本项目不打包、不修改也不静默安装该驱动。
+
+建议仅安装与当前 Windows 版本兼容且具有有效数字签名的版本。不要为了安装旧驱动而关闭 Secure Boot 或开启 Windows 测试签名模式。

@@ -6,6 +6,7 @@ import { SerialManager, type SerialOpenOptions } from './serial-manager'
 import { FileRecorder } from './file-recorder'
 import { SettingsManager, type PersistedSettings } from './settings-manager'
 import { PROJECT_INFO } from '../../shared/project-info'
+import { getVirtualPortStatus, openVirtualPortDownload, openVirtualPortFolder, openVirtualPortManager } from './virtual-port-manager'
 
 function broadcastSerialStatus(status: unknown): void {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -157,6 +158,14 @@ ipcMain.handle('settings:set', async (_event, value: PersistedSettings) => {
   try { await settingsManager.update(value); return { ok: true as const } }
   catch (error) { return { ok: false as const, error: `保存配置失败：${error instanceof Error ? error.message : String(error)}` } }
 })
+
+ipcMain.handle('virtual-port:status', async () => {
+  try { return { ok: true as const, status: await getVirtualPortStatus() } }
+  catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
+ipcMain.handle('virtual-port:open-manager', () => openVirtualPortManager())
+ipcMain.handle('virtual-port:open-folder', () => openVirtualPortFolder())
+ipcMain.handle('virtual-port:download', async () => { await openVirtualPortDownload(); return { ok: true as const } })
 
 interface SplashState { window: BrowserWindow; startedAt: number }
 

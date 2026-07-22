@@ -1,5 +1,5 @@
 /** 工具 ID 是页面导航的稳定标识，发布后不要随意修改。 */
-export type ToolPageId = 'terminal' | 'waveform' | 'recording' | 'replay' | 'ble' | 'usb' | 'networkProtocols' | 'baseConverter' | 'checksum' | 'csv' | 'ohms' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led' | 'opamp' | 'divider'
+export type ToolPageId = 'terminal' | 'waveform' | 'recording' | 'replay' | 'virtualPort' | 'ble' | 'usb' | 'networkProtocols' | 'baseConverter' | 'checksum' | 'csv' | 'ohms' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led' | 'opamp' | 'divider'
 
 export interface ToolDefinition { id: ToolPageId; label: string; icon: string }
 
@@ -9,6 +9,7 @@ export const toolGroups: Array<{ title: string; tools: ToolDefinition[] }> = [
     { id: 'waveform', label: '实时波形', icon: '波' },
     { id: 'recording', label: '数据记录', icon: '录' },
     { id: 'replay', label: '记录与回放', icon: '▶' },
+    { id: 'virtualPort', label: '虚拟串口', icon: '↔' },
     { id: 'ble', label: 'BLE', icon: 'B' },
     { id: 'usb', label: 'USB / HID', icon: 'U' },
     { id: 'networkProtocols', label: 'TCP / UDP / MQTT', icon: 'N' }

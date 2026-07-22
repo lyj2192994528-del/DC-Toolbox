@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ReplayPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, WaveformPanel } from '@/tools'
+import { BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ReplayPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
 import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
 import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
@@ -275,6 +275,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); if (reconnectTimer) clearTimeo
     <div class="page-content" :class="{ hidden: activePage !== 'waveform' }"><WaveformPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'recording' }"><RecordingPanel :connected="isConnected" :serial-summary="`${selectedPath} @ ${baudRate}, ${dataBits}${parity[0].toUpperCase()}${stopBits}, ${flowControl}`" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'replay' }"><ReplayPanel /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'virtualPort' }"><VirtualPortPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'ble' }"><BlePanel kind="ble" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'usb' }"><UsbHidPanel kind="usb" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'networkProtocols' }"><NetworkProtocolsPanel kind="network" /></div>

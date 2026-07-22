@@ -27,5 +27,9 @@ contextBridge.exposeInMainWorld('uartScope', {
   },
   exportCsv: (csv: string) => ipcRenderer.invoke('export:csv', csv),
   getSettings: () => ipcRenderer.invoke('settings:get'),
-  setSettings: (settings: unknown) => ipcRenderer.invoke('settings:set', settings)
+  setSettings: (settings: unknown) => ipcRenderer.invoke('settings:set', settings),
+  getVirtualPortStatus: () => ipcRenderer.invoke('virtual-port:status'),
+  openVirtualPortManager: () => ipcRenderer.invoke('virtual-port:open-manager'),
+  openVirtualPortFolder: () => ipcRenderer.invoke('virtual-port:open-folder'),
+  openVirtualPortDownload: () => ipcRenderer.invoke('virtual-port:download')
 })
