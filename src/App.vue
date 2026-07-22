@@ -6,12 +6,12 @@ import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
 import { setAppLanguage, useI18n, type AppLanguage } from '@/i18n'
 
-const { language, t } = useI18n()
+const { language, t, tr } = useI18n()
 
 const ports = ref<SerialPortInfo[]>([])
 const selectedPath = ref('')
 const isScanning = ref(false)
-const statusMessage = ref('正在准备扫描串口…')
+const statusMessage = ref('')
 const errorMessage = ref('')
 const connectionState = ref<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
 const connectionMessage = ref(t('app.disconnected'))
@@ -70,9 +70,9 @@ async function refreshPorts(): Promise<void> {
     if (!ports.value.some((port) => port.path === selectedPath.value)) {
       selectedPath.value = ports.value[0]?.path ?? ''
     }
-    statusMessage.value = ports.value.length > 0 ? `检测到 ${ports.value.length} 个串口` : '没有检测到串口'
+    statusMessage.value = ports.value.length > 0 ? t('connection.detected', { count: ports.value.length }) : t('connection.noDevice')
   } catch (error) {
-    errorMessage.value = `页面调用串口扫描失败：${error instanceof Error ? error.message : String(error)}`
+    errorMessage.value = `${tr('页面调用串口扫描失败', 'Failed to scan serial ports')}: ${error instanceof Error ? error.message : String(error)}`
     statusMessage.value = '扫描失败'
   } finally {
     isScanning.value = false
@@ -247,7 +247,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
       </div>
 
       <div v-if="!connectionExpanded" class="connection-quick-row">
-        <div><strong>{{ selectedPath || '未选择串口' }}</strong><span>{{ baudRateText }} baud · {{ dataBits }}{{ parity[0].toUpperCase() }}{{ stopBits }} · {{ flowControl === 'rtscts' ? 'RTS/CTS' : '无流控' }}</span></div>
+        <div><strong>{{ selectedPath || tr('未选择串口', 'No port selected') }}</strong><span>{{ baudRateText }} baud · {{ dataBits }}{{ parity[0].toUpperCase() }}{{ stopBits }} · {{ flowControl === 'rtscts' ? 'RTS/CTS' : tr('无流控', 'No flow control') }}</span></div>
         <button class="connect-button" type="button" :class="{ danger: isConnected }" :disabled="isBusy || (!isConnected && (!selectedPath || Boolean(baudRateError)))" @click="toggleConnection">{{ isBusy ? t('connection.connecting') : isConnected ? t('connection.close') : t('connection.open') }}</button>
       </div>
 

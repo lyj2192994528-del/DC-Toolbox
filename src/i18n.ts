@@ -30,11 +30,12 @@ export function setAppLanguage(language: AppLanguage): void {
   document.documentElement.lang = language
 }
 
-export function useI18n(): { language: typeof appLanguage; t: (key: string, variables?: Record<string, string | number>) => string } {
+export function useI18n(): { language: typeof appLanguage; t: (key: string, variables?: Record<string, string | number>) => string; tr: (zh: string, en: string) => string } {
   const t = (key: string, variables: Record<string, string | number> = {}): string => {
     let value = (appLanguage.value === 'en-US' ? en : zh)[key] ?? zh[key] ?? key
     for (const [name, replacement] of Object.entries(variables)) value = value.replaceAll(`{${name}}`, String(replacement))
     return value
   }
-  return { language: appLanguage, t }
+  const tr = (zhValue: string, enValue: string): string => appLanguage.value === 'en-US' ? enValue : zhValue
+  return { language: appLanguage, t, tr }
 }

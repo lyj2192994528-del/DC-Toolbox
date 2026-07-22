@@ -4,7 +4,7 @@ import { bytesToHex, parseHexInput } from '@/utils/hex'
 import { useI18n } from '@/i18n'
 import { receiveFlushDelay } from '@/buffers/receiveBatching'
 
-const { language, t } = useI18n()
+const { language, t, tr } = useI18n()
 
 type Encoding = 'utf8' | 'gbk' | 'latin1'
 type Suffix = 'none' | 'lf' | 'cr' | 'lfcr' | 'crlf'
@@ -151,16 +151,16 @@ function addChecksum(bytes: number[]): number[] {
 }
 
 function parseNumberInput(text: string, format: 'bin' | 'dec'): number[] | null {
-  if (!text.trim()) { errorMessage.value = '发送内容不能为空。'; return null }
+  if (!text.trim()) { errorMessage.value = tr('发送内容不能为空。', 'Send data cannot be empty.'); return null }
   if (format === 'bin') {
-    if (!/^[01\s,]+$/.test(text)) { errorMessage.value = 'BIN 只能包含 0、1、空格或逗号。'; return null }
+    if (!/^[01\s,]+$/.test(text)) { errorMessage.value = tr('BIN 只能包含 0、1、空格或逗号。', 'BIN may contain only 0, 1, spaces or commas.'); return null }
     const compact = text.replace(/[\s,]/g, '')
-    if (compact.length % 8 !== 0) { errorMessage.value = `BIN 位数必须是 8 的倍数，当前为 ${compact.length} 位。`; return null }
+    if (compact.length % 8 !== 0) { errorMessage.value = tr(`BIN 位数必须是 8 的倍数，当前为 ${compact.length} 位。`, `BIN length must be a multiple of 8; current length is ${compact.length}.`); return null }
     return compact.match(/.{8}/g)!.map((value) => Number.parseInt(value, 2))
   }
   const tokens = text.trim().split(/[\s,]+/)
   const values = tokens.map(Number)
-  if (values.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) { errorMessage.value = 'DEC 必须是由空格或逗号分隔的 0～255 整数。'; return null }
+  if (values.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) { errorMessage.value = tr('DEC 必须是由空格或逗号分隔的 0～255 整数。', 'DEC must contain integers from 0 to 255 separated by spaces or commas.'); return null }
   return values
 }
 
@@ -169,14 +169,14 @@ async function buildPayload(text = sendText.value, format: SendFormat = sendMode
   let bytes: number[]
   if (format === 'hex') {
     const result = parseHexInput(text)
-    if (!result.ok) { errorMessage.value = result.error ?? 'HEX 格式错误。'; return null }
+    if (!result.ok) { errorMessage.value = result.error ?? tr('HEX 格式错误。', 'Invalid HEX format.'); return null }
     bytes = result.bytes
   } else if (format === 'bin' || format === 'dec') {
     const parsed = parseNumberInput(text, format)
     if (!parsed) return null
     bytes = parsed
   } else {
-    if (!text) { errorMessage.value = '发送内容不能为空。'; return null }
+    if (!text) { errorMessage.value = tr('发送内容不能为空。', 'Send data cannot be empty.'); return null }
     const encoded = await window.uartScope.encodeText(text, encoding.value)
     if (!encoded.ok) { errorMessage.value = encoded.error; return null }
     bytes = encoded.bytes
@@ -186,7 +186,7 @@ async function buildPayload(text = sendText.value, format: SendFormat = sendMode
 }
 
 async function sendValue(text: string, remember = false, format: SendFormat = sendMode.value): Promise<boolean> {
-  if (!props.connected) { errorMessage.value = '请先打开串口。'; return false }
+  if (!props.connected) { errorMessage.value = tr('请先打开串口。', 'Open the serial port first.'); return false }
   const payload = await buildPayload(text, format)
   if (!payload) return false
   const result = await window.uartScope.writeSerialData(payload)
@@ -202,7 +202,7 @@ function useQuickCommand(command: string, index: number): void { sendMode.value 
 async function toggleTimer(): Promise<void> {
   if (timerRunning.value) { stopAllTimers(); return }
   const interval = Number(intervalText.value)
-  if (!Number.isInteger(interval) || interval < 20 || interval > 86_400_000) { errorMessage.value = '定时周期必须是 20～86400000 毫秒之间的正整数。'; return }
+  if (!Number.isInteger(interval) || interval < 20 || interval > 86_400_000) { errorMessage.value = tr('定时周期必须是 20～86400000 毫秒之间的正整数。', 'The timed-send interval must be an integer from 20 to 86400000 ms.'); return }
   if (!(await sendOnce())) return
   timerRunning.value = true
   const scheduleNext = async (): Promise<void> => {
@@ -218,7 +218,7 @@ function wait(milliseconds: number): Promise<void> { return new Promise((resolve
 
 async function sendMultiOnce(): Promise<boolean> {
   const rows = enabledMultiRows()
-  if (!rows.length) { errorMessage.value = '请至少启用并填写一条多条发送指令。'; return false }
+  if (!rows.length) { errorMessage.value = tr('请至少启用并填写一条多条发送指令。', 'Enable and fill at least one sequence command.'); return false }
   const interval = Math.max(20, Number(intervalText.value) || 20)
   for (let index = 0; index < rows.length; index += 1) {
     multiCurrentId.value = rows[index].id
@@ -232,7 +232,7 @@ async function sendMultiOnce(): Promise<boolean> {
 async function sendNextMulti(index = 0): Promise<void> {
   if (!multiRunning.value) return
   const rows = enabledMultiRows()
-  if (!rows.length) { errorMessage.value = '没有可继续发送的已启用指令。'; stopAllTimers(); return }
+  if (!rows.length) { errorMessage.value = tr('没有可继续发送的已启用指令。', 'There are no enabled commands to continue sending.'); stopAllTimers(); return }
   const row = rows[index % rows.length]
   multiCurrentId.value = row.id
   if (!(await sendValue(row.text, false, row.format))) return
@@ -243,8 +243,8 @@ async function sendNextMulti(index = 0): Promise<void> {
 async function toggleMulti(): Promise<void> {
   if (multiRunning.value) { stopAllTimers(); return }
   const interval = Number(intervalText.value)
-  if (!Number.isInteger(interval) || interval < 20 || interval > 86_400_000) { errorMessage.value = '循环周期必须是 20～86400000 ms。'; return }
-  if (!enabledMultiRows().length) { errorMessage.value = '请至少启用并填写一条多条发送指令。'; return }
+  if (!Number.isInteger(interval) || interval < 20 || interval > 86_400_000) { errorMessage.value = tr('循环周期必须是 20～86400000 ms。', 'The loop interval must be from 20 to 86400000 ms.'); return }
+  if (!enabledMultiRows().length) { errorMessage.value = tr('请至少启用并填写一条多条发送指令。', 'Enable and fill at least one sequence command.'); return }
   multiRunning.value = true
   await sendNextMulti(0)
 }

@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { RingBuffer } from '@/buffers/RingBuffer'
 import { TextProtocolParser, type TextProtocol } from '@/parsers/TextProtocolParser'
 import { JustFloatParser } from '@/parsers/JustFloatParser'
+import { useI18n } from '@/i18n'
 
 interface Sample { index: number; value: number }
 interface Channel {
@@ -19,6 +20,7 @@ interface Channel {
 }
 
 const colors = ['#176fd1', '#10a2be', '#e68a00', '#8b5cf6', '#e34850', '#16a36a', '#d45ca6', '#6772e5', '#7a8b28', '#9a6324', '#34a4eb', '#f0669b', '#4f7c4f', '#8464a0', '#c55b3c', '#178b8b']
+const { tr } = useI18n()
 const protocol = ref<TextProtocol | 'justfloat'>('csv')
 const parser = new TextProtocolParser('csv')
 const justFloatChannels = ref(3)
@@ -41,9 +43,9 @@ const missingChannelPolicy = ref<'skip' | 'hold'>('skip')
 const expectedCsvChannels = ref(0)
 const visiblePoints = ref(1000)
 const protocolHelp = computed(() => ({
-  csv: 'CSV：每行是一帧，多个通道用英文逗号分隔。例如：1.25,-2.5,3e-2，并以换行结尾。',
-  named: 'NamedData：每行是一帧，名称和值用冒号或等号连接。例如：voltage:3.3,current=0.12，并以换行结尾。',
-  justfloat: 'JustFloat：按小端 Float32 依次发送各通道，每帧末尾追加 00 00 80 7F；请先选择正确的通道数。'
+  csv: tr('CSV：每行是一帧，多个通道用英文逗号分隔。例如：1.25,-2.5,3e-2，并以换行结尾。', 'CSV: one frame per line, with channels separated by commas, for example 1.25,-2.5,3e-2.'),
+  named: tr('NamedData：每行是一帧，名称和值用冒号或等号连接。例如：voltage:3.3,current=0.12，并以换行结尾。', 'NamedData: one frame per line. Connect names and values with a colon or equals sign.'),
+  justfloat: tr('JustFloat：按小端 Float32 依次发送各通道，每帧末尾追加 00 00 80 7F；请先选择正确的通道数。', 'JustFloat: send each channel as little-endian Float32 and append 00 00 80 7F to every frame.')
 }[protocol.value]))
 const viewOffset = ref(0)
 let dragging = false
@@ -76,7 +78,7 @@ function consume(data: Uint8Array): void {
   }
   const batch = parser.consume(data)
   parseErrors.value += batch.errors.length
-  if (batch.errors.length) lastError.value = `${batch.errors.at(-1)!.message} 原始行：${batch.errors.at(-1)!.raw}`
+  if (batch.errors.length) lastError.value = `${batch.errors.at(-1)!.message} ${tr('原始行', 'Raw line')}: ${batch.errors.at(-1)!.raw}`
   for (const frame of batch.frames) appendFrame(frame.values)
 }
 
@@ -84,13 +86,13 @@ function appendFrame(frameValues: Map<string, number>): void {
     const frame = { values: frameValues }
     if (frame.values.size > 16) {
       parseErrors.value += 1
-      lastError.value = `收到 ${frame.values.size} 个通道，第一版最多支持 16 个通道，该帧已丢弃。`
+      lastError.value = tr(`收到 ${frame.values.size} 个通道，最多支持 16 个通道，该帧已丢弃。`, `Received ${frame.values.size} channels. The 16-channel limit was exceeded, so this frame was dropped.`)
       return
     }
     if (protocol.value === 'csv') {
       if (expectedCsvChannels.value === 0) expectedCsvChannels.value = frame.values.size
       else if (frame.values.size !== expectedCsvChannels.value) {
-        lastError.value = `CSV 通道数从 ${expectedCsvChannels.value} 变为 ${frame.values.size}。策略：${channelCountPolicy.value}。`
+        lastError.value = tr(`CSV 通道数从 ${expectedCsvChannels.value} 变为 ${frame.values.size}。策略：${channelCountPolicy.value}。`, `CSV channel count changed from ${expectedCsvChannels.value} to ${frame.values.size}. Policy: ${channelCountPolicy.value}.`)
         if (channelCountPolicy.value === 'drop') { parseErrors.value += 1; return }
         if (channelCountPolicy.value === 'reset') channels.clear()
         expectedCsvChannels.value = frame.values.size
@@ -206,7 +208,7 @@ function saveScreenshot(): void {
 async function exportCsv(): Promise<void> {
   exportMessage.value = ''
   const channelArray = channelList.value
-  if (!channelArray.length) { exportMessage.value = '当前没有可导出的波形数据。'; return }
+  if (!channelArray.length) { exportMessage.value = tr('当前没有可导出的波形数据。', 'There is no waveform data to export.'); return }
   const rows = new Map<number, Map<string, number>>()
   for (const channel of channelArray) {
     for (const sample of channel.samples.toArray()) {
@@ -218,7 +220,7 @@ async function exportCsv(): Promise<void> {
   const csvLines = [['sample', ...channelArray.map((channel) => escape(channel.name))].join(',')]
   for (const [index, values] of rows) csvLines.push([String(index), ...channelArray.map((channel) => values.get(channel.key)?.toString() ?? '')].join(','))
   const result = await window.uartScope.exportCsv(csvLines.join('\r\n'))
-  exportMessage.value = result.ok ? (result.canceled ? '已取消导出。' : `CSV 已保存：${result.filePath}`) : result.error
+  exportMessage.value = result.ok ? (result.canceled ? tr('已取消导出。', 'Export canceled.') : `${tr('CSV 已保存', 'CSV saved')}: ${result.filePath}`) : result.error
 }
 
 onMounted(async () => {
@@ -232,42 +234,42 @@ onBeforeUnmount(() => { removeDataListener?.(); cancelAnimationFrame(animationId
   <section class="waveform-layout">
     <div class="panel chart-panel">
       <div class="panel-toolbar">
-        <div><h2>实时波形</h2><p>{{ receiveFrames }} 帧 · {{ frameRate }} FPS · {{ parseErrors }} 个解析错误</p></div>
+        <div><h2>{{ tr('实时波形', 'Live Waveform') }}</h2><p>{{ receiveFrames }} {{ tr('帧', 'frames') }} · {{ frameRate }} FPS · {{ parseErrors }} {{ tr('个解析错误', 'parse errors') }}</p></div>
         <div class="toolbar-actions">
           <select v-model="protocol" class="compact-select"><option value="csv">FireWater / CSV</option><option value="named">NamedData</option><option value="justfloat">JustFloat</option></select>
-          <button class="soft-button" @click="paused = !paused">{{ paused ? '恢复' : '暂停' }}</button>
-          <button class="soft-button" @click="clearWaveform">清空</button>
-          <button class="soft-button" @click="saveScreenshot">截图</button>
-          <button class="soft-button" @click="exportCsv">导出 CSV</button>
+          <button class="soft-button" @click="paused = !paused">{{ paused ? tr('恢复', 'Resume') : tr('暂停', 'Pause') }}</button>
+          <button class="soft-button" @click="clearWaveform">{{ tr('清空', 'Clear') }}</button>
+          <button class="soft-button" @click="saveScreenshot">{{ tr('截图', 'Screenshot') }}</button>
+          <button class="soft-button" @click="exportCsv">{{ tr('导出 CSV', 'Export CSV') }}</button>
         </div>
       </div>
       <div class="chart-options">
-        <label><input v-model="autoScale" type="checkbox" /> Y 轴自动缩放</label>
-        <label>最小 <input v-model="fixedMin" :disabled="autoScale" /></label>
-        <label>最大 <input v-model="fixedMax" :disabled="autoScale" /></label>
-        <label>缓存点数 <input v-model.number="pointLimit" type="number" min="1" max="50000" /></label>
-        <label>显示点数 <input v-model.number="visiblePoints" type="number" min="1" :max="pointLimit" /></label>
-        <label v-if="protocol === 'csv'">通道变化 <select v-model="channelCountPolicy"><option value="accept">接受</option><option value="drop">丢弃</option><option value="reset">清空重建</option></select></label>
-        <label v-else-if="protocol === 'named'">缺少通道 <select v-model="missingChannelPolicy"><option value="skip">跳过该通道</option><option value="hold">保持上一值</option></select></label>
-        <label v-else>JustFloat 通道 <select v-model.number="justFloatChannels"><option v-for="count in 16" :key="count" :value="count">{{ count }}</option></select></label>
+        <label><input v-model="autoScale" type="checkbox" /> {{ tr('Y 轴自动缩放', 'Auto-scale Y axis') }}</label>
+        <label>{{ tr('最小', 'Min') }} <input v-model="fixedMin" :disabled="autoScale" /></label>
+        <label>{{ tr('最大', 'Max') }} <input v-model="fixedMax" :disabled="autoScale" /></label>
+        <label>{{ tr('缓存点数', 'Buffer Points') }} <input v-model.number="pointLimit" type="number" min="1" max="50000" /></label>
+        <label>{{ tr('显示点数', 'Visible Points') }} <input v-model.number="visiblePoints" type="number" min="1" :max="pointLimit" /></label>
+        <label v-if="protocol === 'csv'">{{ tr('通道变化', 'Channel Change') }} <select v-model="channelCountPolicy"><option value="accept">{{ tr('接受', 'Accept') }}</option><option value="drop">{{ tr('丢弃', 'Drop') }}</option><option value="reset">{{ tr('清空重建', 'Reset') }}</option></select></label>
+        <label v-else-if="protocol === 'named'">{{ tr('缺少通道', 'Missing Channel') }} <select v-model="missingChannelPolicy"><option value="skip">{{ tr('跳过该通道', 'Skip') }}</option><option value="hold">{{ tr('保持上一值', 'Hold last value') }}</option></select></label>
+        <label v-else>{{ tr('JustFloat 通道', 'JustFloat Channels') }} <select v-model.number="justFloatChannels"><option v-for="count in 16" :key="count" :value="count">{{ count }}</option></select></label>
       </div>
-      <div class="protocol-help"><strong>当前协议：{{ protocol === 'csv' ? 'FireWater / CSV' : protocol === 'named' ? 'NamedData' : 'JustFloat' }}</strong><span>{{ protocolHelp }}</span></div>
+      <div class="protocol-help"><strong>{{ tr('当前协议', 'Protocol') }}: {{ protocol === 'csv' ? 'FireWater / CSV' : protocol === 'named' ? 'NamedData' : 'JustFloat' }}</strong><span>{{ protocolHelp }}</span></div>
       <canvas ref="canvasRef" class="waveform-canvas" @wheel="onWheel" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @pointercancel="onPointerUp"></canvas>
-      <p class="chart-hint">鼠标滚轮缩放 · 左右拖动查看历史 · 当前窗口 {{ visiblePoints }} 点<span v-if="viewOffset"> · 距最新 {{ viewOffset }} 点</span></p>
+      <p class="chart-hint">{{ tr('鼠标滚轮缩放 · 左右拖动查看历史 · 当前窗口', 'Mouse wheel to zoom · Drag to view history · Current window') }} {{ visiblePoints }} {{ tr('点', 'points') }}<span v-if="viewOffset"> · {{ tr('距最新', 'Offset') }} {{ viewOffset }} {{ tr('点', 'points') }}</span></p>
       <p v-if="lastError" class="parse-warning">{{ lastError }}</p>
       <p v-if="exportMessage" class="export-message">{{ exportMessage }}</p>
     </div>
     <aside class="panel channel-panel">
-      <div class="panel-toolbar"><div><h2>通道</h2><p>最多 16 路</p></div></div>
+      <div class="panel-toolbar"><div><h2>{{ tr('通道', 'Channels') }}</h2><p>{{ tr('最多 16 路', 'Up to 16') }}</p></div></div>
       <div v-if="channelList.length" class="channel-list">
         <div v-for="channel in channelList" :key="channel.key" class="channel-item">
           <div class="channel-title"><input v-model="channel.visible" type="checkbox" /><i :style="{ background: channel.color }"></i><input v-model="channel.name" class="channel-name" /></div>
           <strong>{{ channel.current.toPrecision(6) }}</strong>
-          <small>最小 {{ channel.min.toPrecision(5) }} · 最大 {{ channel.max.toPrecision(5) }}</small>
-          <small>平均 {{ (channel.sum / channel.total).toPrecision(5) }} · {{ channel.total }} 点</small>
+          <small>{{ tr('最小', 'Min') }} {{ channel.min.toPrecision(5) }} · {{ tr('最大', 'Max') }} {{ channel.max.toPrecision(5) }}</small>
+          <small>{{ tr('平均', 'Average') }} {{ (channel.sum / channel.total).toPrecision(5) }} · {{ channel.total }} {{ tr('点', 'points') }}</small>
         </div>
       </div>
-      <div v-else class="empty-state"><strong>等待波形数据</strong><span>请选择协议并发送数值行。</span></div>
+      <div v-else class="empty-state"><strong>{{ tr('等待波形数据', 'Waiting for waveform data') }}</strong><span>{{ tr('请选择协议并发送数值行。', 'Select a protocol and send numeric frames.') }}</span></div>
     </aside>
   </section>
 </template>

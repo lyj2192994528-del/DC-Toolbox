@@ -3,9 +3,11 @@ import { computed, ref } from 'vue'
 import seriesSchematic from '@/assets/series-resistors.svg'
 import parallelSchematic from '@/assets/parallel-resistors.svg'
 import { calculateEquivalentResistance, solveMissingResistance, type ResistorNetworkMode } from '@/calculators/resistorNetwork'
+import { useI18n } from '@/i18n'
 
 interface ResistorRow { id: number; enabled: boolean; value: string | number; factor: number }
 type Target = 'total' | 'missing'
+const { tr, language } = useI18n()
 const mode = ref<ResistorNetworkMode>('series')
 const target = ref<Target>('total')
 const rows = ref<ResistorRow[]>([
@@ -46,27 +48,27 @@ function calculate(): void {
 }
 function formatResistance(value: number): string {
   const unit = value >= 1e6 ? units[2] : value >= 1e3 ? units[1] : value < 1 ? units[3] : units[0]
-  return `${Number((value / unit.factor).toPrecision(9)).toLocaleString('zh-CN', { maximumFractionDigits: 9 })} ${unit.label}`
+  return `${Number((value / unit.factor).toPrecision(9)).toLocaleString(language.value, { maximumFractionDigits: 9 })} ${unit.label}`
 }
 </script>
 
 <template>
   <section class="network-layout">
     <div class="panel network-controls">
-      <div class="panel-toolbar"><div><h2>串并联电阻计算器</h2><p>计算多个电阻的等效阻值，或按目标总阻值反算 Rn</p></div><span class="circuit-type">{{ formula }}</span></div>
-      <div class="network-mode-tabs"><button :class="{ active: mode === 'series' }" @click="switchMode('series')">串联电阻</button><button :class="{ active: mode === 'parallel' }" @click="switchMode('parallel')">并联电阻</button></div>
-      <div class="solve-targets network-targets"><label :class="{ active: target === 'total' }"><input v-model="target" type="radio" value="total" @change="clearResult" />求等效总阻值</label><label :class="{ active: target === 'missing' }"><input v-model="target" type="radio" value="missing" @change="clearResult" />反算缺失电阻 Rn</label></div>
-      <label v-if="target === 'missing'" class="network-total-field"><span>目标等效总阻值 RT</span><div class="value-with-unit"><input v-model="targetTotal" type="number" min="0" step="any" @input="clearResult" /><select v-model.number="targetFactor" @change="clearResult"><option v-for="unit in units" :key="unit.label" :value="unit.factor">{{ unit.label }}</option></select></div></label>
-      <div class="network-toolbar"><button class="soft-button" @click="toggleAll">{{ allSelected ? '取消全选' : '全选' }}</button><button class="soft-button" @click="addRows(1)">添加电阻</button><button class="soft-button" @click="addRows(5)">添加 5 条</button><button class="soft-button" @click="clearSelected">清空选中</button><span>已选 {{ selectedCount }} / {{ rows.length }}，最多 100 条</span></div>
+      <div class="panel-toolbar"><div><h2>{{ tr('串并联电阻计算器', 'Series & Parallel Resistor Calculator') }}</h2><p>{{ tr('计算多个电阻的等效阻值，或按目标总阻值反算 Rn', 'Calculate equivalent resistance or solve missing Rn from a target total') }}</p></div><span class="circuit-type">{{ formula }}</span></div>
+      <div class="network-mode-tabs"><button :class="{ active: mode === 'series' }" @click="switchMode('series')">{{ tr('串联电阻', 'Series') }}</button><button :class="{ active: mode === 'parallel' }" @click="switchMode('parallel')">{{ tr('并联电阻', 'Parallel') }}</button></div>
+      <div class="solve-targets network-targets"><label :class="{ active: target === 'total' }"><input v-model="target" type="radio" value="total" @change="clearResult" />{{ tr('求等效总阻值', 'Equivalent Resistance') }}</label><label :class="{ active: target === 'missing' }"><input v-model="target" type="radio" value="missing" @change="clearResult" />{{ tr('反算缺失电阻 Rn', 'Solve Missing Rn') }}</label></div>
+      <label v-if="target === 'missing'" class="network-total-field"><span>{{ tr('目标等效总阻值 RT', 'Target Total RT') }}</span><div class="value-with-unit"><input v-model="targetTotal" type="number" min="0" step="any" @input="clearResult" /><select v-model.number="targetFactor" @change="clearResult"><option v-for="unit in units" :key="unit.label" :value="unit.factor">{{ unit.label }}</option></select></div></label>
+      <div class="network-toolbar"><button class="soft-button" @click="toggleAll">{{ allSelected ? tr('取消全选', 'Clear All') : tr('全选', 'Select All') }}</button><button class="soft-button" @click="addRows(1)">{{ tr('添加电阻', 'Add Resistor') }}</button><button class="soft-button" @click="addRows(5)">{{ tr('添加 5 条', 'Add 5') }}</button><button class="soft-button" @click="clearSelected">{{ tr('清空选中', 'Clear Selected') }}</button><span>{{ tr('已选', 'Selected') }} {{ selectedCount }} / {{ rows.length }}，{{ tr('最多 100 条', 'maximum 100') }}</span></div>
       <div class="resistor-list">
         <div v-for="(row, index) in rows" :key="row.id" class="resistor-row">
-          <input v-model="row.enabled" type="checkbox" :aria-label="`选择 R${index + 1}`" @change="clearResult" /><strong>R{{ index + 1 }}</strong><input v-model="row.value" type="number" min="0" step="any" placeholder="输入阻值" :disabled="!row.enabled" :aria-label="`R${index + 1} 阻值`" @input="clearResult" /><select v-model.number="row.factor" :disabled="!row.enabled" :aria-label="`R${index + 1} 单位`" @change="clearResult"><option v-for="unit in units" :key="unit.label" :value="unit.factor">{{ unit.label }}</option></select><button class="row-delete" :disabled="rows.length <= 2" :aria-label="`删除 R${index + 1}`" @click="removeRow(row.id)">×</button>
+          <input v-model="row.enabled" type="checkbox" :aria-label="`R${index + 1}`" @change="clearResult" /><strong>R{{ index + 1 }}</strong><input v-model="row.value" type="number" min="0" step="any" :placeholder="tr('输入阻值', 'Enter resistance')" :disabled="!row.enabled" :aria-label="`R${index + 1}`" @input="clearResult" /><select v-model.number="row.factor" :disabled="!row.enabled" :aria-label="`R${index + 1}`" @change="clearResult"><option v-for="unit in units" :key="unit.label" :value="unit.factor">{{ unit.label }}</option></select><button class="row-delete" :disabled="rows.length <= 2" :aria-label="`R${index + 1}`" @click="removeRow(row.id)">×</button>
         </div>
       </div>
-      <button class="wide-action" @click="calculate">{{ target === 'total' ? '计算等效总阻值' : '计算缺失电阻 Rn' }}</button>
+      <button class="wide-action" @click="calculate">{{ target === 'total' ? tr('计算等效总阻值', 'Calculate Equivalent Resistance') : tr('计算缺失电阻 Rn', 'Calculate Missing Rn') }}</button>
       <p v-if="error" class="error-message">{{ error }}</p>
-      <div class="unified-result"><template v-if="result !== null"><span>{{ target === 'total' ? '等效总阻值 RT' : '缺失电阻 Rn' }}</span><strong>{{ formatResistance(result) }}</strong><code>{{ formula }}</code></template><p v-else>勾选需要参与计算的电阻并输入阻值，空白行会自动忽略。</p></div>
+      <div class="unified-result"><template v-if="result !== null"><span>{{ target === 'total' ? tr('等效总阻值 RT', 'Equivalent RT') : tr('缺失电阻 Rn', 'Missing Rn') }}</span><strong>{{ formatResistance(result) }}</strong><code>{{ formula }}</code></template><p v-else>{{ tr('勾选需要参与计算的电阻并输入阻值，空白行会自动忽略。', 'Select participating resistors and enter their values. Blank rows are ignored.') }}</p></div>
     </div>
-    <aside class="panel network-schematic-panel"><div class="panel-toolbar"><div><h2>{{ mode === 'series' ? '串联电阻原理图' : '并联电阻原理图' }}</h2><p>根据你提供的 TEL 网络表重新绘制</p></div></div><img :src="mode === 'series' ? seriesSchematic : parallelSchematic" :alt="mode === 'series' ? '串联电阻原理图' : '并联电阻原理图'" /><div class="netlist-check"><strong>网络表连接核对通过</strong><p>{{ netlistSummary }}</p><p>{{ mode === 'series' ? '串联电路中各电阻电流相同，总阻值为各阻值之和。' : '并联电路中各支路电压相同，总阻值小于任意一个支路阻值。' }}</p></div></aside>
+    <aside class="panel network-schematic-panel"><div class="panel-toolbar"><div><h2>{{ mode === 'series' ? tr('串联电阻原理图', 'Series Resistor Schematic') : tr('并联电阻原理图', 'Parallel Resistor Schematic') }}</h2><p>{{ tr('根据你提供的 TEL 网络表重新绘制', 'Redrawn from the supplied TEL netlist') }}</p></div></div><img :src="mode === 'series' ? seriesSchematic : parallelSchematic" alt="Resistor schematic" /><div class="netlist-check"><strong>{{ tr('网络表连接核对通过', 'Netlist verified') }}</strong><p>{{ netlistSummary }}</p><p>{{ mode === 'series' ? tr('串联电路中各电阻电流相同，总阻值为各阻值之和。', 'Series resistors carry the same current and their values add together.') : tr('并联电路中各支路电压相同，总阻值小于任意一个支路阻值。', 'Parallel branches share the same voltage and the total is below every branch value.') }}</p></div></aside>
   </section>
 </template>
