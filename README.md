@@ -90,8 +90,8 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 
 ## 发布文件
 
-- `artifacts/DC Toolbox-1.1.4-x64-Setup.exe`：Windows 安装程序
-- `artifacts/DC Toolbox-1.1.4-x64-Portable.exe`：免安装便携版
+- `artifacts/DC Toolbox-1.1.5-x64-Setup.exe`：Windows 安装程序
+- `artifacts/DC Toolbox-1.1.5-x64-Portable.exe`：免安装便携版
 
 当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。
 当前包含串口终端、实时波形、数据记录、进制转换、CRC/校验、CSV 分析及常用电子计算工具。界面支持简体中文和 English，可在首次欢迎窗口或“视图 → 语言”中切换。串口接收默认使用固定 20 ms 空闲超时分帧，连续高速数据最迟每 100 ms 刷新一次。BLE、USB/HID、TCP/UDP/MQTT 已建立独立模块入口，等待接入真实 Windows 底层能力。

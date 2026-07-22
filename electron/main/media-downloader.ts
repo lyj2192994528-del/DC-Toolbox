@@ -33,6 +33,16 @@ function cookieArguments(source: unknown): string[] {
     : []
 }
 
+/** 将第三方命令行错误转换为用户可执行的说明，同时保留未知错误原文。 */
+function friendlyMediaError(stderr: string): string {
+  const detail = stderr.trim()
+  if (/Unsupported URL: https:\/\/www\.douyin\.com\/note\//i.test(detail)) return '该链接是抖音“图文作品”（note），不是视频。当前网页媒体工具只能下载抖音视频，暂不支持图文笔记中的图片。'
+  if (/Fresh cookies .* are needed/i.test(detail)) return '抖音要求新鲜 Cookie。请在“网站登录状态”中选择已登录抖音的 Edge 或 Chrome，完全关闭该浏览器后再解析。'
+  if (/Could not copy Chrome cookie database/i.test(detail)) return '浏览器正在占用 Cookie 数据库。请完全退出所选 Edge 或 Chrome（包括后台进程）后重试。'
+  if (/Failed to decrypt with DPAPI/i.test(detail)) return 'Windows 无法解密该浏览器的 Cookie。请使用当前 Windows 用户运行 DC Toolbox，并确认浏览器登录状态。'
+  return detail || '无法解析该网页。'
+}
+
 async function exists(path: string): Promise<boolean> {
   try { await access(path); return true } catch { return false }
 }
@@ -155,7 +165,7 @@ export class MediaDownloader {
     const executablePath = await this.resolveExecutablePath()
     if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
     const result = await runCapture(executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', ...cookieArguments(request.cookieSource), url])
-    if (result.code !== 0) throw new Error(result.stderr.trim() || '无法解析该网页。')
+    if (result.code !== 0) throw new Error(friendlyMediaError(result.stderr))
     const data = JSON.parse(result.stdout) as Record<string, unknown>
     return {
       title: typeof data.title === 'string' ? data.title : '未命名媒体',
@@ -203,7 +213,7 @@ export class MediaDownloader {
         ? { state: 'canceled', percent: 0, speed: '', eta: '', message: '下载已取消。' }
         : code === 0
           ? { state: 'completed', percent: 100, speed: '', eta: '', message: '下载完成。' }
-          : { state: 'error', percent: 0, speed: '', eta: '', message: errorText.trim() || `下载进程退出：${code}` })
+          : { state: 'error', percent: 0, speed: '', eta: '', message: friendlyMediaError(errorText) || `下载进程退出：${code}` })
     })
   }
 
