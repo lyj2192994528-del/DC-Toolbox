@@ -40,16 +40,25 @@ export class MediaDownloader {
   constructor(private readonly onProgress: ProgressListener) {}
 
   private get directory(): string { return join(app.getPath('userData'), 'tools', 'yt-dlp') }
-  private get executablePath(): string { return join(this.directory, 'yt-dlp.exe') }
+  private get downloadedExecutablePath(): string { return join(this.directory, 'yt-dlp.exe') }
+  private get bundledExecutablePath(): string {
+    return app.isPackaged
+      ? join(process.resourcesPath, 'tools', 'yt-dlp.exe')
+      : join(app.getAppPath(), 'build', 'tools', 'yt-dlp.exe')
+  }
+  private async resolveExecutablePath(): Promise<string> {
+    return await exists(this.downloadedExecutablePath) ? this.downloadedExecutablePath : this.bundledExecutablePath
+  }
 
   async getStatus(): Promise<MediaToolStatus> {
-    const installed = await exists(this.executablePath)
-    const versionResult = installed ? await runCapture(this.executablePath, ['--version']).catch(() => undefined) : undefined
+    const executablePath = await this.resolveExecutablePath()
+    const installed = await exists(executablePath)
+    const versionResult = installed ? await runCapture(executablePath, ['--version']).catch(() => undefined) : undefined
     const ffmpegResult = await runCapture('where.exe', ['ffmpeg.exe']).catch(() => undefined)
     return {
       installed,
       version: versionResult?.code === 0 ? versionResult.stdout.trim() : '',
-      executablePath: this.executablePath,
+      executablePath,
       ffmpegAvailable: ffmpegResult?.code === 0
     }
   }
@@ -64,18 +73,19 @@ export class MediaDownloader {
     if (!expected) throw new Error('官方校验文件中没有 yt-dlp.exe。')
     const actual = createHash('sha256').update(bytes).digest('hex')
     if (actual !== expected) throw new Error('yt-dlp.exe SHA-256 校验失败，已拒绝安装。')
-    const temporaryPath = `${this.executablePath}.download`
+    const temporaryPath = `${this.downloadedExecutablePath}.download`
     await writeFile(temporaryPath, bytes)
-    await unlink(this.executablePath).catch(() => undefined)
-    await rename(temporaryPath, this.executablePath)
+    await unlink(this.downloadedExecutablePath).catch(() => undefined)
+    await rename(temporaryPath, this.downloadedExecutablePath)
     return this.getStatus()
   }
 
   async analyze(value: unknown): Promise<MediaInfo> {
     const url = typeof value === 'string' ? value.trim() : ''
     if (!isHttpsUrl(url)) throw new Error('请输入有效的 HTTPS 网页地址。')
-    if (!await exists(this.executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
-    const result = await runCapture(this.executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', url])
+    const executablePath = await this.resolveExecutablePath()
+    if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
+    const result = await runCapture(executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', url])
     if (result.code !== 0) throw new Error(result.stderr.trim() || '无法解析该网页。')
     const data = JSON.parse(result.stdout) as Record<string, unknown>
     return {
@@ -96,11 +106,12 @@ export class MediaDownloader {
     const mode = options.mode === 'audio' ? 'audio' : 'video'
     if (!isHttpsUrl(url)) throw new Error('请输入有效的 HTTPS 网页地址。')
     if (!directory) throw new Error('请先选择保存目录。')
-    if (!await exists(this.executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
+    const executablePath = await this.resolveExecutablePath()
+    if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
     await mkdir(directory, { recursive: true })
     const format = mode === 'audio' ? 'bestaudio[ext=m4a]/bestaudio' : 'best[ext=mp4]/best'
     const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', '--format', format, '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
-    const child = spawn(this.executablePath, args, { windowsHide: true })
+    const child = spawn(executablePath, args, { windowsHide: true })
     this.active = child
     this.cancelRequested = false
     child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8')

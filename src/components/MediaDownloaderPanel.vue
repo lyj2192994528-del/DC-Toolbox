@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from '@/i18n'
 const { language, tr } = useI18n()
 
@@ -14,6 +14,15 @@ const installing = ref(false)
 const error = ref('')
 let removeProgress: (() => void) | undefined
 
+function resetPreviousTask(): void {
+  if (progress.value.state === 'running') return
+  info.value = undefined
+  error.value = ''
+  progress.value = { state: 'canceled', percent: 0, speed: '', eta: '', message: '' }
+}
+
+watch(url, resetPreviousTask)
+
 async function refresh(): Promise<void> {
   const result = await window.uartScope.getMediaToolStatus()
   if (result.ok) status.value = result.status
@@ -27,7 +36,7 @@ async function install(): Promise<void> {
   installing.value = false
 }
 async function analyze(): Promise<void> {
-  busy.value = true; error.value = ''; info.value = undefined
+  busy.value = true; resetPreviousTask()
   const result = await window.uartScope.analyzeMedia(url.value)
   if (result.ok) info.value = result.info
   else error.value = result.error
@@ -55,7 +64,7 @@ onBeforeUnmount(() => removeProgress?.())
 <template>
   <section class="media-downloader-layout">
     <div class="panel media-main">
-      <div class="panel-toolbar"><div><h2>{{ tr('网页媒体下载', 'Web Media Downloader') }}</h2><p>{{ tr('粘贴公开网页地址，解析后下载视频或原始音频', 'Paste a public webpage URL, analyze it, then download video or original audio') }}</p></div><span class="virtual-status" :class="{ ready: status?.installed }">{{ status?.installed ? `yt-dlp ${status.version}` : tr('组件未安装', 'Component not installed') }}</span></div>
+      <div class="panel-toolbar"><div><h2>{{ tr('网页媒体下载', 'Web Media Downloader') }}</h2><p>{{ tr('粘贴公开网页地址，解析后下载视频或原始音频', 'Paste a public webpage URL, analyze it, then download video or original audio') }}</p></div><div class="media-tool-actions"><span class="virtual-status" :class="{ ready: status?.installed }">{{ status?.installed ? `yt-dlp ${status.version}` : tr('组件未安装', 'Component not installed') }}</span><button v-if="status?.installed" class="soft-button" :disabled="installing || progress.state === 'running'" @click="install">{{ installing ? tr('更新并校验中…', 'Updating and verifying…') : tr('更新 / 修复组件', 'Update / Repair') }}</button></div></div>
       <div v-if="!status?.installed" class="media-install-card"><strong>{{ tr('需要官方解析组件', 'Official parser required') }}</strong><p>{{ tr('DC Toolbox 将从 yt-dlp 官方 GitHub Release 下载 Windows x64 程序，并在安装前校验 SHA-256。', 'DC Toolbox downloads the Windows x64 executable from the official yt-dlp GitHub Release and verifies SHA-256 before installation.') }}</p><button :disabled="installing" @click="install">{{ installing ? tr('下载并校验中…', 'Downloading and verifying…') : tr('安装 yt-dlp 组件', 'Install yt-dlp') }}</button></div>
       <template v-else>
         <label class="field"><span>{{ tr('网页或视频地址', 'Webpage or video URL') }}</span><div class="media-url-row"><input v-model="url" type="url" placeholder="https://…" @keyup.enter="analyze"><button :disabled="busy || !url.trim()" @click="analyze">{{ busy ? tr('解析中…', 'Analyzing…') : tr('解析链接', 'Analyze') }}</button></div></label>

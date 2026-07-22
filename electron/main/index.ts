@@ -305,7 +305,11 @@ function installApplicationMenu(language: AppLanguage): void {
       { type: 'separator' }, { label: en ? 'Toggle Full Screen' : '切换全屏', role: 'togglefullscreen' }
     ] },
     { label: en ? 'Window' : '窗口', submenu: [{ label: en ? 'Minimize' : '最小化', role: 'minimize' }, { label: en ? 'Close' : '关闭', role: 'close' }] },
-    { label: en ? 'Help' : '帮助', submenu: [{ label: en ? 'About & Contact' : '关于与联系', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'About DC Toolbox' : '关于 DC Toolbox', message: en ? 'DC Toolbox — Embedded Development & Debugging Toolkit' : PROJECT_INFO.fullName, detail: en ? `Version ${app.getVersion()}\nEmail: ${PROJECT_INFO.email}\nQQ Group: ${PROJECT_INFO.qqGroup}\nGitHub: ${PROJECT_INFO.githubUrl || 'Coming soon'}` : `版本 ${app.getVersion()}\n作者邮箱：${PROJECT_INFO.email}\nQQ群：${PROJECT_INFO.qqGroup}\n群名：${PROJECT_INFO.qqGroupName}\nGitHub：${PROJECT_INFO.githubUrl || '待添加'}` }) } }] }
+    { label: en ? 'Help' : '帮助', submenu: [
+      { label: en ? 'Open-Source Components' : '开源组件', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'Open-Source Components' : '开源组件', message: en ? 'Open source used by DC Toolbox' : 'DC Toolbox 使用的主要开源项目', detail: en ? 'yt-dlp — Web media parser/downloader — Unlicense\nElectron — Desktop runtime — MIT\nVue.js — User interface — MIT\nNode SerialPort — Serial communication — MIT\niconv-lite — Text encoding — MIT\n\nProject links and full notices are available in the GitHub repository.' : 'yt-dlp — 网页媒体解析与下载 — Unlicense\nElectron — 桌面应用运行时 — MIT\nVue.js — 用户界面框架 — MIT\nNode SerialPort — 串口通信 — MIT\niconv-lite — 字符编码转换 — MIT\n\n项目链接与完整声明可在 GitHub 仓库的 THIRD_PARTY_NOTICES.md 中查看。' }) } },
+      { type: 'separator' },
+      { label: en ? 'About & Contact' : '关于与联系', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'About DC Toolbox' : '关于 DC Toolbox', message: en ? 'DC Toolbox — Embedded Development & Debugging Toolkit' : PROJECT_INFO.fullName, detail: en ? `Version ${app.getVersion()}\nEmail: ${PROJECT_INFO.email}\nQQ Group: ${PROJECT_INFO.qqGroup}\nGitHub: ${PROJECT_INFO.githubUrl || 'Coming soon'}` : `版本 ${app.getVersion()}\n作者邮箱：${PROJECT_INFO.email}\nQQ群：${PROJECT_INFO.qqGroup}\n群名：${PROJECT_INFO.qqGroupName}\nGitHub：${PROJECT_INFO.githubUrl || '待添加'}` }) } }
+    ] }
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }

@@ -90,8 +90,8 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 
 ## 发布文件
 
-- `artifacts/DC Toolbox-1.1.0-x64-Setup.exe`：Windows 安装程序
-- `artifacts/DC Toolbox-1.1.0-x64-Portable.exe`：免安装便携版
+- `artifacts/DC Toolbox-1.1.1-x64-Setup.exe`：Windows 安装程序
+- `artifacts/DC Toolbox-1.1.1-x64-Portable.exe`：免安装便携版
 
 当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。
 当前包含串口终端、实时波形、数据记录、进制转换、CRC/校验、CSV 分析及常用电子计算工具。界面支持简体中文和 English，可在首次欢迎窗口或“视图 → 语言”中切换。串口接收默认使用固定 20 ms 空闲超时分帧，连续高速数据最迟每 100 ms 刷新一次。BLE、USB/HID、TCP/UDP/MQTT 已建立独立模块入口，等待接入真实 Windows 底层能力。
@@ -104,6 +104,6 @@ DC Toolbox 可以检测并打开已安装的 [com0com 官方项目](https://sour
 
 ## 网页媒体下载组件
 
-网页媒体解析由独立开源项目 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 提供。DC Toolbox 不在安装包中捆绑该程序；用户首次使用时可选择从 yt-dlp 官方 GitHub Release 下载，软件会依据官方 `SHA2-256SUMS` 校验 `yt-dlp.exe`。
+网页媒体解析由独立开源项目 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 提供。正式安装包已内置官方 Windows x64 程序，无需首次下载；用户也可以主动选择“更新 / 修复组件”，软件仅在用户点击后从官方 GitHub Release 下载，并依据官方 `SHA2-256SUMS` 校验 `yt-dlp.exe`。软件不会强制或静默更新组件。第三方项目说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 该功能不支持 DRM、付费墙、私人内容或权限绕过。请只下载你有权保存和使用的公开内容，并遵守网站条款和当地法律。

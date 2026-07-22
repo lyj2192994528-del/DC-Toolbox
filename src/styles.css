@@ -476,6 +476,7 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .media-downloader-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, .75fr); gap: 18px; align-items: start; }
 .media-main, .media-guide { padding: 28px; }
 .media-install-card, .media-info-card, .media-progress { margin-top: 20px; padding: 18px; border: 1px solid #dce7f2; border-radius: 14px; background: #f7fbff; }
+.media-tool-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
 .media-install-card p { margin: 8px 0 16px; color: #6f7d92; line-height: 1.65; }
 .media-url-row, .media-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
 .media-info-card { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 18px; align-items: center; }
