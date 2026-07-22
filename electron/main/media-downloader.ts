@@ -18,6 +18,21 @@ function isHttpsUrl(value: string): boolean {
   try { return new URL(value).protocol === 'https:' } catch { return false }
 }
 
+/** 支持直接网址，也支持抖音等应用复制出来的整段分享文案。 */
+function extractPublicHttpsUrl(value: unknown): string {
+  const text = typeof value === 'string' ? value.trim() : ''
+  if (isHttpsUrl(text)) return text
+  const matched = text.match(/https:\/\/[^\s\]】）)>"']+/i)?.[0] ?? ''
+  const cleaned = matched.replace(/[，。！？；、,.!?;:]+$/u, '')
+  return isHttpsUrl(cleaned) ? cleaned : ''
+}
+
+function cookieArguments(source: unknown): string[] {
+  return source === 'edge' || source === 'chrome'
+    ? ['--cookies-from-browser', source]
+    : []
+}
+
 async function exists(path: string): Promise<boolean> {
   try { await access(path); return true } catch { return false }
 }
@@ -134,11 +149,12 @@ export class MediaDownloader {
   }
 
   async analyze(value: unknown): Promise<MediaInfo> {
-    const url = typeof value === 'string' ? value.trim() : ''
+    const request = value && typeof value === 'object' ? value as Record<string, unknown> : { url: value }
+    const url = extractPublicHttpsUrl(request.url)
     if (!isHttpsUrl(url)) throw new Error('请输入有效的 HTTPS 网页地址。')
     const executablePath = await this.resolveExecutablePath()
     if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
-    const result = await runCapture(executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', url])
+    const result = await runCapture(executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', ...cookieArguments(request.cookieSource), url])
     if (result.code !== 0) throw new Error(result.stderr.trim() || '无法解析该网页。')
     const data = JSON.parse(result.stdout) as Record<string, unknown>
     return {
@@ -154,7 +170,7 @@ export class MediaDownloader {
     if (!value || typeof value !== 'object') throw new Error('下载参数格式错误。')
     if (this.active) throw new Error('已有下载任务正在运行。')
     const options = value as Record<string, unknown>
-    const url = typeof options.url === 'string' ? options.url.trim() : ''
+    const url = extractPublicHttpsUrl(options.url)
     const directory = typeof options.directory === 'string' ? options.directory : ''
     const mode = options.mode === 'audio' ? 'audio' : 'video'
     if (!isHttpsUrl(url)) throw new Error('请输入有效的 HTTPS 网页地址。')
@@ -165,7 +181,7 @@ export class MediaDownloader {
     const ffmpegPath = await this.resolveFfmpegPath()
     const format = mode === 'audio' ? 'bestaudio[ext=m4a]/bestaudio' : 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best'
     if (mode === 'video' && !ffmpegPath) throw new Error('该网站的音频和视频分开提供，请先安装 FFmpeg 合并组件。')
-    const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', '--format', format, '--merge-output-format', 'mp4', ...(ffmpegPath ? ['--ffmpeg-location', ffmpegPath] : []), '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
+    const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', ...cookieArguments(options.cookieSource), '--format', format, '--merge-output-format', 'mp4', ...(ffmpegPath ? ['--ffmpeg-location', ffmpegPath] : []), '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
     const child = spawn(executablePath, args, { windowsHide: true })
     this.active = child
     this.cancelRequested = false
@@ -196,5 +212,26 @@ export class MediaDownloader {
     this.cancelRequested = true
     this.active.kill()
     return true
+  }
+
+  async extractAudio(value: unknown): Promise<string> {
+    if (!value || typeof value !== 'object') throw new Error('音频提取参数格式错误。')
+    const options = value as Record<string, unknown>
+    const input = typeof options.input === 'string' ? options.input : ''
+    const output = typeof options.output === 'string' ? options.output : ''
+    const format = options.format === 'wav' || options.format === 'm4a' ? options.format : 'mp3'
+    const bitrate = ['128k', '192k', '256k', '320k'].includes(String(options.bitrate)) ? String(options.bitrate) : '192k'
+    if (!input || !await exists(input)) throw new Error('请选择有效的本地媒体文件。')
+    if (!output) throw new Error('请选择输出文件。')
+    const ffmpegPath = await this.resolveFfmpegPath()
+    if (!ffmpegPath) throw new Error('内置 FFmpeg 不可用，请在网页媒体工具中执行更新或修复。')
+    const codecArgs = format === 'wav'
+      ? ['-vn', '-c:a', 'pcm_s16le']
+      : format === 'm4a'
+        ? ['-vn', '-c:a', 'aac', '-b:a', bitrate]
+        : ['-vn', '-c:a', 'libmp3lame', '-b:a', bitrate]
+    const result = await runCapture(ffmpegPath, ['-hide_banner', '-loglevel', 'error', '-y', '-i', input, ...codecArgs, output])
+    if (result.code !== 0) throw new Error(result.stderr.trim() || '音频提取失败。')
+    return output
   }
 }

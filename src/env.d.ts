@@ -65,11 +65,14 @@ interface Window {
     getMediaToolStatus: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
     installMediaTool: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
     installFfmpeg: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
-    analyzeMedia: (url: string) => Promise<{ ok: true; info: MediaInfo } | { ok: false; error: string }>
+    analyzeMedia: (options: { url: string; cookieSource: 'none' | 'edge' | 'chrome' }) => Promise<{ ok: true; info: MediaInfo } | { ok: false; error: string }>
     chooseMediaDirectory: () => Promise<string | null>
-    downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => Promise<{ ok: true } | { ok: false; error: string }>
+    downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio'; cookieSource: 'none' | 'edge' | 'chrome' }) => Promise<{ ok: true } | { ok: false; error: string }>
     cancelMediaDownload: () => Promise<{ ok: true; canceled: boolean }>
     onMediaProgress: (listener: (progress: MediaProgress) => void) => () => void
+    chooseAudioInput: () => Promise<string | null>
+    chooseAudioOutput: (format: 'mp3' | 'm4a' | 'wav') => Promise<string | null>
+    extractAudio: (options: { input: string; output: string; format: 'mp3' | 'm4a' | 'wav'; bitrate: string }) => Promise<{ ok: true; output: string } | { ok: false; error: string }>
     openExternal: (url: string) => Promise<{ ok: true } | { ok: false; error: string }>
     setLanguage: (language: 'zh-CN' | 'en-US') => Promise<{ ok: true } | { ok: false; error: string }>
     onLanguageChange: (listener: (language: 'zh-CN' | 'en-US') => void) => () => void

@@ -196,6 +196,19 @@ ipcMain.handle('media:download', async (_event, options: unknown) => {
   catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
 })
 ipcMain.handle('media:cancel', () => ({ ok: true as const, canceled: mediaDownloader.cancel() }))
+ipcMain.handle('audio:choose-input', async () => {
+  const result = await dialog.showOpenDialog({ properties: ['openFile'], filters: [{ name: '媒体文件', extensions: ['mp4', 'mkv', 'mov', 'avi', 'webm', 'm4a', 'aac', 'flac', 'wav', 'mp3'] }] })
+  return result.canceled ? null : result.filePaths[0] ?? null
+})
+ipcMain.handle('audio:choose-output', async (_event, format: unknown) => {
+  const extension = format === 'wav' || format === 'm4a' ? format : 'mp3'
+  const result = await dialog.showSaveDialog({ defaultPath: `audio.${extension}`, filters: [{ name: `${extension.toUpperCase()} 音频`, extensions: [extension] }] })
+  return result.canceled ? null : result.filePath ?? null
+})
+ipcMain.handle('audio:extract', async (_event, options: unknown) => {
+  try { return { ok: true as const, output: await mediaDownloader.extractAudio(options) } }
+  catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
 ipcMain.handle('app:open-external', async (_event, value: unknown) => {
   if (typeof value !== 'string') return { ok: false as const, error: '链接格式错误。' }
   try {

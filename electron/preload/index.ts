@@ -35,15 +35,18 @@ contextBridge.exposeInMainWorld('uartScope', {
   getMediaToolStatus: () => ipcRenderer.invoke('media:status'),
   installMediaTool: () => ipcRenderer.invoke('media:install'),
   installFfmpeg: () => ipcRenderer.invoke('media:install-ffmpeg'),
-  analyzeMedia: (url: string) => ipcRenderer.invoke('media:analyze', url),
+  analyzeMedia: (options: { url: string; cookieSource: 'none' | 'edge' | 'chrome' }) => ipcRenderer.invoke('media:analyze', options),
   chooseMediaDirectory: () => ipcRenderer.invoke('media:choose-directory'),
-  downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => ipcRenderer.invoke('media:download', options),
+  downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio'; cookieSource: 'none' | 'edge' | 'chrome' }) => ipcRenderer.invoke('media:download', options),
   cancelMediaDownload: () => ipcRenderer.invoke('media:cancel'),
   onMediaProgress: (listener: (progress: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, progress: unknown): void => listener(progress)
     ipcRenderer.on('media:progress', handler)
     return () => ipcRenderer.removeListener('media:progress', handler)
   },
+  chooseAudioInput: () => ipcRenderer.invoke('audio:choose-input'),
+  chooseAudioOutput: (format: 'mp3' | 'm4a' | 'wav') => ipcRenderer.invoke('audio:choose-output', format),
+  extractAudio: (options: { input: string; output: string; format: 'mp3' | 'm4a' | 'wav'; bitrate: string }) => ipcRenderer.invoke('audio:extract', options),
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
   setLanguage: (language: 'zh-CN' | 'en-US') => ipcRenderer.invoke('app:set-language', language),
   onLanguageChange: (listener: (language: 'zh-CN' | 'en-US') => void) => {

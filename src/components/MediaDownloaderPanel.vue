@@ -7,6 +7,7 @@ const status = ref<MediaToolStatus>()
 const url = ref('')
 const directory = ref('')
 const mode = ref<'video' | 'audio'>('video')
+const cookieSource = ref<'none' | 'edge' | 'chrome'>('none')
 const info = ref<MediaInfo>()
 const progress = ref<MediaProgress>({ state: 'canceled', percent: 0, speed: '', eta: '', message: '' })
 const busy = ref(false)
@@ -45,7 +46,7 @@ async function installFfmpeg(): Promise<void> {
 }
 async function analyze(): Promise<void> {
   busy.value = true; resetPreviousTask()
-  const result = await window.uartScope.analyzeMedia(url.value)
+  const result = await window.uartScope.analyzeMedia({ url: url.value, cookieSource: cookieSource.value })
   if (result.ok) info.value = result.info
   else error.value = result.error
   busy.value = false
@@ -55,8 +56,13 @@ async function chooseDirectory(): Promise<void> {
   if (selected) directory.value = selected
 }
 async function download(): Promise<void> {
+  if (localStorage.getItem('dc-toolbox-media-rights-confirmed-v1') !== '1') {
+    const accepted = window.confirm(tr('请确认：你只会下载自己有权保存和使用的公开内容，并遵守网站条款与当地法律。DC Toolbox 不提供 DRM、付费墙或访问控制绕过。\n\n确认并继续？', 'Please confirm that you will only download public content you are entitled to save and use, following site terms and local law. DC Toolbox does not bypass DRM, paywalls, or access controls.\n\nConfirm and continue?'))
+    if (!accepted) return
+    localStorage.setItem('dc-toolbox-media-rights-confirmed-v1', '1')
+  }
   error.value = ''; progress.value = { state: 'running', percent: 0, speed: '', eta: '', message: tr('正在准备下载…', 'Preparing download…') }
-  const result = await window.uartScope.downloadMedia({ url: url.value, directory: directory.value, mode: mode.value })
+  const result = await window.uartScope.downloadMedia({ url: url.value, directory: directory.value, mode: mode.value, cookieSource: cookieSource.value })
   if (!result.ok) { error.value = result.error; progress.value.state = 'error' }
 }
 async function cancel(): Promise<void> { await window.uartScope.cancelMediaDownload() }
@@ -76,14 +82,14 @@ onBeforeUnmount(() => removeProgress?.())
       <div v-if="!status?.installed" class="media-install-card"><strong>{{ tr('需要官方解析组件', 'Official parser required') }}</strong><p>{{ tr('DC Toolbox 将从 yt-dlp 官方 GitHub Release 下载 Windows x64 程序，并在安装前校验 SHA-256。', 'DC Toolbox downloads the Windows x64 executable from the official yt-dlp GitHub Release and verifies SHA-256 before installation.') }}</p><button :disabled="installing" @click="install">{{ installing ? tr('下载并校验中…', 'Downloading and verifying…') : tr('安装 yt-dlp 组件', 'Install yt-dlp') }}</button></div>
       <template v-else>
         <div v-if="!status.ffmpegAvailable" class="media-install-card"><strong>{{ tr('需要音视频合并组件', 'Audio/video merger required') }}</strong><p>{{ tr('哔哩哔哩、YouTube 等网站通常分别提供视频轨和音频轨。安装开源 FFmpeg LGPL 组件后，软件可自动下载并合并为 MP4。仅在你点击后联网安装。', 'Sites such as BiliBili and YouTube commonly provide separate video and audio tracks. Install the open-source FFmpeg LGPL component to download and merge them into MP4. Installation starts only when you click.') }}</p><button :disabled="installingFfmpeg" @click="installFfmpeg">{{ installingFfmpeg ? tr('下载并安装中…', 'Downloading and installing…') : tr('安装 FFmpeg 合并组件', 'Install FFmpeg merger') }}</button></div>
-        <label class="field"><span>{{ tr('网页或视频地址', 'Webpage or video URL') }}</span><div class="media-url-row"><input v-model="url" type="url" placeholder="https://…" @keyup.enter="analyze"><button :disabled="busy || !url.trim()" @click="analyze">{{ busy ? tr('解析中…', 'Analyzing…') : tr('解析链接', 'Analyze') }}</button></div></label>
+        <label class="field"><span>{{ tr('网页链接或完整分享文案', 'Web URL or full share text') }}</span><div class="media-url-row"><input v-model="url" type="text" :placeholder="tr('可直接粘贴抖音等应用复制的整段分享文案', 'Paste a URL or full share text copied from an app')" @keyup.enter="analyze"><button :disabled="busy || !url.trim()" @click="analyze">{{ busy ? tr('解析中…', 'Analyzing…') : tr('解析链接', 'Analyze') }}</button></div></label>
         <div v-if="info" class="media-info-card"><img v-if="info.thumbnail" :src="info.thumbnail" alt=""><div><span>{{ info.extractor }}</span><h3>{{ info.title }}</h3><p>{{ tr('时长', 'Duration') }}：{{ formatDuration(info.duration) }}</p></div></div>
-        <div class="media-options"><label class="field"><span>{{ tr('下载内容', 'Download content') }}</span><select v-model="mode"><option value="video">{{ tr('最佳兼容视频（优先 MP4）', 'Best compatible video (prefer MP4)') }}</option><option value="audio">{{ tr('最佳原始音频（优先 M4A）', 'Best original audio (prefer M4A)') }}</option></select></label><label class="field"><span>{{ tr('保存目录', 'Save directory') }}</span><div class="media-directory-row"><input :value="directory" readonly :placeholder="tr('请选择保存目录', 'Choose a save folder')"><button class="soft-button" @click="chooseDirectory">{{ tr('选择目录', 'Choose') }}</button></div></label></div>
+        <div class="media-options"><label class="field"><span>{{ tr('下载内容', 'Download content') }}</span><select v-model="mode"><option value="video">{{ tr('最佳兼容视频（优先 MP4）', 'Best compatible video (prefer MP4)') }}</option><option value="audio">{{ tr('最佳原始音频（优先 M4A）', 'Best original audio (prefer M4A)') }}</option></select></label><label class="field"><span>{{ tr('网站登录状态（可选）', 'Browser sign-in (optional)') }}</span><select v-model="cookieSource"><option value="none">{{ tr('不读取 Cookie', 'Do not read cookies') }}</option><option value="edge">Microsoft Edge</option><option value="chrome">Google Chrome</option></select></label><label class="field"><span>{{ tr('保存目录', 'Save directory') }}</span><div class="media-directory-row"><input :value="directory" readonly :placeholder="tr('请选择保存目录', 'Choose a save folder')"><button class="soft-button" @click="chooseDirectory">{{ tr('选择目录', 'Choose') }}</button></div></label></div>
         <div v-if="progress.message" class="media-progress"><div><span>{{ progress.message }}</span><strong>{{ progress.percent.toFixed(1) }}%</strong></div><progress :value="progress.percent" max="100"></progress><small v-if="progress.state === 'running'">{{ progress.speed }} · ETA {{ progress.eta }}</small></div>
         <div class="media-actions"><button :disabled="!info || !directory || progress.state === 'running'" @click="download">{{ tr('开始下载', 'Start download') }}</button><button v-if="progress.state === 'running'" class="danger-button" @click="cancel">{{ tr('取消下载', 'Cancel') }}</button></div>
       </template>
       <p v-if="error" class="error-message">{{ error }}</p>
     </div>
-    <aside class="panel media-guide"><h2>{{ tr('使用与版权说明', 'Usage & Copyright') }}</h2><ol><li>{{ tr('仅粘贴公开、无需绕过访问控制的 HTTPS 网页地址。', 'Paste only public HTTPS pages that require no access-control bypass.') }}</li><li>{{ tr('点击“解析链接”，确认标题和时长。', 'Analyze the link and confirm title and duration.') }}</li><li>{{ tr('选择视频或音频及保存目录，然后开始下载。', 'Choose video or audio and a save folder, then start downloading.') }}</li></ol><div class="driver-warning"><strong>{{ tr('重要限制', 'Important limits') }}</strong><p>{{ tr('不支持 DRM、付费墙、私人内容或权限绕过。请只下载你有权保存和使用的内容，并遵守网站条款及当地法律。', 'DRM, paywalls, private content and access-control bypass are not supported. Download only content you are entitled to save and use, following site terms and local law.') }}</p></div><p class="license-note">{{ tr('解析能力由独立开源项目 yt-dlp 提供。DC Toolbox 不保证所有网站长期可用。', 'Parsing is provided by the independent open-source yt-dlp project. DC Toolbox cannot guarantee long-term support for every website.') }}</p></aside>
+    <aside class="panel media-guide"><h2>{{ tr('使用与版权说明', 'Usage & Copyright') }}</h2><ol><li>{{ tr('可粘贴公开 HTTPS 链接，或包含链接的完整分享文案。', 'Paste a public HTTPS link or full share text containing one.') }}</li><li>{{ tr('抖音要求新鲜 Cookie 时，可选择已登录的 Edge 或 Chrome；读取失败时请先关闭浏览器。', 'If Douyin requires fresh cookies, select a signed-in Edge or Chrome; close the browser first if reading fails.') }}</li><li>{{ tr('解析后确认标题和时长，选择内容与保存目录再下载。', 'After analysis, confirm the title and duration, then choose content and a save folder.') }}</li></ol><div class="driver-warning"><strong>{{ tr('重要限制', 'Important limits') }}</strong><p>{{ tr('不支持 DRM、付费墙、私人内容或权限绕过。请只下载你有权保存和使用的内容，并遵守网站条款及当地法律。', 'DRM, paywalls, private content and access-control bypass are not supported. Download only content you are entitled to save and use, following site terms and local law.') }}</p></div><p class="license-note">{{ tr('解析能力由独立开源项目 yt-dlp 提供。浏览器 Cookie 仅由 yt-dlp 在本机读取，不会上传到 DC Toolbox 服务。', 'Parsing is provided by the independent open-source yt-dlp project. Browser cookies are read locally by yt-dlp and are not uploaded to a DC Toolbox service.') }}</p></aside>
   </section>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, MediaDownloaderPanel, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
+import { AudioExtractorPanel, BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, MediaDownloaderPanel, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
 import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
 import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
@@ -23,6 +23,23 @@ const flowControl = ref<'none' | 'rtscts'>('none')
 const customBaudRates = ref<number[]>([])
 const autoReconnect = ref(true)
 const activePage = ref<ToolPageId | 'about'>('terminal')
+const collapsedGroups = ref<Record<string, boolean>>((() => {
+  try { return JSON.parse(localStorage.getItem('dc-toolbox-collapsed-groups') ?? '{}') as Record<string, boolean> }
+  catch { return {} }
+})())
+
+function toggleToolGroup(title: string): void {
+  collapsedGroups.value = { ...collapsedGroups.value, [title]: !collapsedGroups.value[title] }
+  localStorage.setItem('dc-toolbox-collapsed-groups', JSON.stringify(collapsedGroups.value))
+}
+
+function selectTool(id: ToolPageId, groupTitle: string): void {
+  activePage.value = id
+  if (collapsedGroups.value[groupTitle]) {
+    collapsedGroups.value = { ...collapsedGroups.value, [groupTitle]: false }
+    localStorage.setItem('dc-toolbox-collapsed-groups', JSON.stringify(collapsedGroups.value))
+  }
+}
 const settingsWarning = ref('')
 const connectionExpanded = ref(false)
 const signals = ref({ dtr: false, rts: false, brk: false })
@@ -244,7 +261,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="toolbox-layout">
       <aside class="tool-sidebar">
         <div class="sidebar-heading"><strong>{{ t('nav.title') }}</strong><span>{{ t('nav.count', { count: toolCount }) }}</span></div>
-        <section v-for="group in toolGroups" :key="group.title" class="tool-group"><h3>{{ language === 'en-US' ? group.titleEn : group.title }}</h3><button v-for="tool in group.tools" :key="tool.id" :class="{ active: activePage === tool.id }" @click="activePage = tool.id"><span>{{ tool.icon }}</span>{{ language === 'en-US' ? tool.labelEn : tool.label }}</button></section>
+        <section v-for="group in toolGroups" :key="group.title" class="tool-group" :class="{ collapsed: collapsedGroups[group.title] }"><button class="tool-group-heading" type="button" :aria-expanded="!collapsedGroups[group.title]" @click="toggleToolGroup(group.title)"><strong>{{ language === 'en-US' ? group.titleEn : group.title }}</strong><span>{{ collapsedGroups[group.title] ? '＋' : '−' }}</span></button><div class="tool-group-items"><button v-for="tool in group.tools" :key="tool.id" :class="{ active: activePage === tool.id }" @click="selectTool(tool.id, group.title)"><span>{{ tool.icon }}</span>{{ language === 'en-US' ? tool.labelEn : tool.label }}</button></div></section>
         <button class="about-nav-button" :class="{ active: activePage === 'about' }" @click="activePage = 'about'"><span>i</span>{{ t('nav.about') }}</button>
         <div class="sidebar-footer">{{ tr('QQ群', 'QQ Group') }} {{ PROJECT_INFO.qqGroup }}<br>{{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</div>
       </aside>
@@ -307,6 +324,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="page-content" :class="{ hidden: activePage !== 'usb' }"><UsbHidPanel kind="usb" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'networkProtocols' }"><NetworkProtocolsPanel kind="network" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'mediaDownloader' }"><MediaDownloaderPanel /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'audioExtractor' }"><AudioExtractorPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'baseConverter' }"><BaseConverter /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'checksum' }"><ChecksumCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'csv' }"><CsvAnalyzer /></div>
@@ -321,6 +339,6 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="page-content" :class="{ hidden: activePage !== 'about' }"><AboutPanel /></div>
       </main>
     </div>
-    <footer class="project-promo-bar"><strong>{{ language === 'en-US' ? PROJECT_INFO.fullNameEn : PROJECT_INFO.fullName }}</strong><span>{{ tr('邮箱', 'Email') }}: {{ PROJECT_INFO.email }}</span><span>{{ tr('QQ群', 'QQ Group') }}: {{ PROJECT_INFO.qqGroup }} · {{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</span><span>GitHub: <button class="external-link compact" type="button" @click="openRepository">{{ PROJECT_INFO.githubUrl }}</button></span></footer>
+    <footer class="project-promo-bar"><strong>{{ language === 'en-US' ? PROJECT_INFO.fullNameEn : PROJECT_INFO.fullName }}</strong><span>{{ tr('邮箱', 'Email') }}: {{ PROJECT_INFO.email }}</span><span>{{ tr('QQ群', 'QQ Group') }}: {{ PROJECT_INFO.qqGroup }} · {{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</span><span>GitHub: <button class="external-link compact" type="button" @click="openRepository">{{ PROJECT_INFO.githubUrl }}</button></span><b class="app-version">v{{ PROJECT_INFO.version }}</b></footer>
   </div>
 </template>

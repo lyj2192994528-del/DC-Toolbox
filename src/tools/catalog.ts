@@ -1,5 +1,5 @@
 /** 工具 ID 是页面导航的稳定标识，发布后不要随意修改。 */
-export type ToolPageId = 'terminal' | 'waveform' | 'recording' | 'virtualPort' | 'ble' | 'usb' | 'networkProtocols' | 'mediaDownloader' | 'baseConverter' | 'checksum' | 'csv' | 'ohms' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led' | 'opamp' | 'divider'
+export type ToolPageId = 'terminal' | 'waveform' | 'recording' | 'virtualPort' | 'ble' | 'usb' | 'networkProtocols' | 'mediaDownloader' | 'audioExtractor' | 'baseConverter' | 'checksum' | 'csv' | 'ohms' | 'power' | 'network' | 'capacitors' | 'capconvert' | 'led' | 'opamp' | 'divider'
 
 export interface ToolDefinition { id: ToolPageId; label: string; labelEn: string; icon: string }
 
@@ -15,6 +15,7 @@ export const toolGroups: Array<{ title: string; titleEn: string; tools: ToolDefi
   ] },
   { title: '数据工具', titleEn: 'Data Tools', tools: [
     { id: 'mediaDownloader', label: '网页媒体下载', labelEn: 'Media Downloader', icon: '▶' },
+    { id: 'audioExtractor', label: '音频提取', labelEn: 'Audio Extractor', icon: '♪' },
     { id: 'baseConverter', label: '进制转换', labelEn: 'Base Converter', icon: '10' },
     { id: 'checksum', label: 'CRC / 校验', labelEn: 'CRC / Checksum', icon: 'CRC' },
     { id: 'csv', label: 'CSV 分析', labelEn: 'CSV Analyzer', icon: 'CSV' }
