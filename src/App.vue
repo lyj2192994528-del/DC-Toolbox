@@ -211,15 +211,15 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
         <button class="welcome-close" aria-label="Close" @click="closeWelcome">×</button>
         <div class="welcome-brand">
           <div class="welcome-logo">DC</div>
-          <div><span>{{ t('welcome.kicker') }}</span><h2 id="welcome-title">{{ language === 'en-US' ? 'DC Toolbox — Embedded Development & Debugging Toolkit' : PROJECT_INFO.fullName }}</h2><p>{{ t('welcome.subtitle') }}</p></div>
+          <div><span>{{ t('welcome.kicker') }}</span><h2 id="welcome-title">{{ language === 'en-US' ? PROJECT_INFO.fullNameEn : PROJECT_INFO.fullName }}</h2><p>{{ t('welcome.subtitle') }}</p></div>
         </div>
         <div class="welcome-language"><strong>{{ t('welcome.language') }}</strong><button :class="{ active: language === 'zh-CN' }" @click="chooseLanguage('zh-CN')">简体中文</button><button :class="{ active: language === 'en-US' }" @click="chooseLanguage('en-US')">English</button></div>
         <div class="welcome-contact-grid">
           <div><span>{{ t('welcome.email') }}</span><strong>{{ PROJECT_INFO.email }}</strong></div>
-          <div><span>{{ t('welcome.group') }}</span><strong>{{ PROJECT_INFO.qqGroup }}</strong><small>{{ PROJECT_INFO.qqGroupName }}</small></div>
+          <div><span>{{ t('welcome.group') }}</span><strong>{{ PROJECT_INFO.qqGroup }}</strong><small>{{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</small></div>
           <div><span>{{ t('welcome.repo') }}</span><strong>{{ PROJECT_INFO.githubUrl || t('welcome.pending') }}</strong></div>
         </div>
-        <div class="welcome-group-description"><strong>{{ t('welcome.groupIntro') }}</strong><p>{{ language === 'en-US' ? 'Community for MCU development, hardware design, serial debugging, waveform analysis and engineering tools. Please be friendly and avoid advertising.' : PROJECT_INFO.qqGroupDescription }}</p></div>
+        <div class="welcome-group-description"><strong>{{ t('welcome.groupIntro') }}</strong><p>{{ language === 'en-US' ? PROJECT_INFO.qqGroupDescriptionEn : PROJECT_INFO.qqGroupDescription }}</p></div>
         <div class="welcome-actions"><label><input v-model="hideWelcomeNextTime" type="checkbox"> {{ t('welcome.hide') }}</label><button @click="activePage = 'about'; closeWelcome()">{{ t('welcome.about') }}</button><button class="welcome-primary" @click="closeWelcome">{{ t('welcome.enter') }}</button></div>
       </section>
     </div>
@@ -242,7 +242,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
         <div class="sidebar-heading"><strong>{{ t('nav.title') }}</strong><span>{{ t('nav.count', { count: toolCount }) }}</span></div>
         <section v-for="group in toolGroups" :key="group.title" class="tool-group"><h3>{{ language === 'en-US' ? group.titleEn : group.title }}</h3><button v-for="tool in group.tools" :key="tool.id" :class="{ active: activePage === tool.id }" @click="activePage = tool.id"><span>{{ tool.icon }}</span>{{ language === 'en-US' ? tool.labelEn : tool.label }}</button></section>
         <button class="about-nav-button" :class="{ active: activePage === 'about' }" @click="activePage = 'about'"><span>i</span>{{ t('nav.about') }}</button>
-        <div class="sidebar-footer">QQ群 {{ PROJECT_INFO.qqGroup }}<br>{{ PROJECT_INFO.qqGroupName }}</div>
+        <div class="sidebar-footer">{{ tr('QQ群', 'QQ Group') }} {{ PROJECT_INFO.qqGroup }}<br>{{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</div>
       </aside>
 
       <main class="tool-workspace">
@@ -316,6 +316,6 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="page-content" :class="{ hidden: activePage !== 'about' }"><AboutPanel /></div>
       </main>
     </div>
-    <footer class="project-promo-bar"><strong>{{ PROJECT_INFO.fullName }}</strong><span>邮箱：{{ PROJECT_INFO.email }}</span><span>QQ群：{{ PROJECT_INFO.qqGroup }} · {{ PROJECT_INFO.qqGroupName }}</span><span>GitHub：{{ PROJECT_INFO.githubUrl || '待添加' }}</span></footer>
+    <footer class="project-promo-bar"><strong>{{ language === 'en-US' ? PROJECT_INFO.fullNameEn : PROJECT_INFO.fullName }}</strong><span>{{ tr('邮箱', 'Email') }}: {{ PROJECT_INFO.email }}</span><span>{{ tr('QQ群', 'QQ Group') }}: {{ PROJECT_INFO.qqGroup }} · {{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</span><span>GitHub: {{ PROJECT_INFO.githubUrl || tr('待添加', 'Not configured') }}</span></footer>
   </div>
 </template>
