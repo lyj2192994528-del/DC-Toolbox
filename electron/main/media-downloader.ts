@@ -55,6 +55,11 @@ export class MediaDownloader {
   private get directory(): string { return join(app.getPath('userData'), 'tools', 'yt-dlp') }
   private get ffmpegDirectory(): string { return join(app.getPath('userData'), 'tools', 'ffmpeg') }
   private get downloadedFfmpegPath(): string { return join(this.ffmpegDirectory, 'ffmpeg.exe') }
+  private get bundledFfmpegPath(): string {
+    return app.isPackaged
+      ? join(process.resourcesPath, 'tools', 'ffmpeg.exe')
+      : join(app.getAppPath(), 'build', 'tools', 'ffmpeg.exe')
+  }
   private get downloadedExecutablePath(): string { return join(this.directory, 'yt-dlp.exe') }
   private get bundledExecutablePath(): string {
     return app.isPackaged
@@ -66,6 +71,7 @@ export class MediaDownloader {
   }
   private async resolveFfmpegPath(): Promise<string | undefined> {
     if (await exists(this.downloadedFfmpegPath)) return this.downloadedFfmpegPath
+    if (await exists(this.bundledFfmpegPath)) return this.bundledFfmpegPath
     const result = await runCapture('where.exe', ['ffmpeg.exe']).catch(() => undefined)
     return result?.code === 0 ? result.stdout.split(/\r?\n/)[0]?.trim() : undefined
   }
