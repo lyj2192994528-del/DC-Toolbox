@@ -1,11 +1,12 @@
 import { app, net } from 'electron'
 import { createHash } from 'node:crypto'
-import { access, mkdir, rename, unlink, writeFile } from 'node:fs/promises'
+import { access, copyFile, mkdir, readdir, rename, rm, unlink, writeFile } from 'node:fs/promises'
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { join } from 'node:path'
 
 const DOWNLOAD_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 const CHECKSUM_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/SHA2-256SUMS'
+const FFMPEG_RELEASE_API = 'https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/tags/latest'
 
 export interface MediaToolStatus { installed: boolean; version: string; executablePath: string; ffmpegAvailable: boolean }
 export interface MediaInfo { title: string; webpageUrl: string; duration: number | null; thumbnail: string; extractor: string }
@@ -19,6 +20,18 @@ function isHttpsUrl(value: string): boolean {
 
 async function exists(path: string): Promise<boolean> {
   try { await access(path); return true } catch { return false }
+}
+
+async function findFile(directory: string, fileName: string): Promise<string | undefined> {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name)
+    if (entry.isFile() && entry.name.toLowerCase() === fileName.toLowerCase()) return path
+    if (entry.isDirectory()) {
+      const nested = await findFile(path, fileName)
+      if (nested) return nested
+    }
+  }
+  return undefined
 }
 
 function runCapture(command: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
@@ -40,6 +53,8 @@ export class MediaDownloader {
   constructor(private readonly onProgress: ProgressListener) {}
 
   private get directory(): string { return join(app.getPath('userData'), 'tools', 'yt-dlp') }
+  private get ffmpegDirectory(): string { return join(app.getPath('userData'), 'tools', 'ffmpeg') }
+  private get downloadedFfmpegPath(): string { return join(this.ffmpegDirectory, 'ffmpeg.exe') }
   private get downloadedExecutablePath(): string { return join(this.directory, 'yt-dlp.exe') }
   private get bundledExecutablePath(): string {
     return app.isPackaged
@@ -49,17 +64,22 @@ export class MediaDownloader {
   private async resolveExecutablePath(): Promise<string> {
     return await exists(this.downloadedExecutablePath) ? this.downloadedExecutablePath : this.bundledExecutablePath
   }
+  private async resolveFfmpegPath(): Promise<string | undefined> {
+    if (await exists(this.downloadedFfmpegPath)) return this.downloadedFfmpegPath
+    const result = await runCapture('where.exe', ['ffmpeg.exe']).catch(() => undefined)
+    return result?.code === 0 ? result.stdout.split(/\r?\n/)[0]?.trim() : undefined
+  }
 
   async getStatus(): Promise<MediaToolStatus> {
     const executablePath = await this.resolveExecutablePath()
     const installed = await exists(executablePath)
     const versionResult = installed ? await runCapture(executablePath, ['--version']).catch(() => undefined) : undefined
-    const ffmpegResult = await runCapture('where.exe', ['ffmpeg.exe']).catch(() => undefined)
+    const ffmpegPath = await this.resolveFfmpegPath()
     return {
       installed,
       version: versionResult?.code === 0 ? versionResult.stdout.trim() : '',
       executablePath,
-      ffmpegAvailable: ffmpegResult?.code === 0
+      ffmpegAvailable: Boolean(ffmpegPath)
     }
   }
 
@@ -77,6 +97,33 @@ export class MediaDownloader {
     await writeFile(temporaryPath, bytes)
     await unlink(this.downloadedExecutablePath).catch(() => undefined)
     await rename(temporaryPath, this.downloadedExecutablePath)
+    return this.getStatus()
+  }
+
+  async installFfmpeg(): Promise<MediaToolStatus> {
+    const releaseResponse = await net.fetch(FFMPEG_RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } })
+    if (!releaseResponse.ok) throw new Error('无法读取 FFmpeg-Builds 官方发布信息。')
+    const release = await releaseResponse.json() as { assets?: Array<{ name?: string; browser_download_url?: string; digest?: string }> }
+    const asset = release.assets?.find((item) => item.name === 'ffmpeg-master-latest-win64-lgpl.zip')
+    if (!asset?.browser_download_url) throw new Error('官方发布中未找到 Windows x64 LGPL 版本。')
+    const response = await net.fetch(asset.browser_download_url)
+    if (!response.ok) throw new Error('FFmpeg 合并组件下载失败。')
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    const expected = asset.digest?.replace(/^sha256:/i, '').toLowerCase()
+    const actual = createHash('sha256').update(bytes).digest('hex')
+    if (expected && actual !== expected) throw new Error('FFmpeg 压缩包 SHA-256 校验失败，已拒绝安装。')
+    const temporaryDirectory = join(this.ffmpegDirectory, 'extracting')
+    const archivePath = join(this.ffmpegDirectory, 'ffmpeg.zip')
+    await rm(this.ffmpegDirectory, { recursive: true, force: true })
+    await mkdir(temporaryDirectory, { recursive: true })
+    await writeFile(archivePath, bytes)
+    const extraction = await runCapture('tar.exe', ['-xf', archivePath, '-C', temporaryDirectory])
+    if (extraction.code !== 0) throw new Error(extraction.stderr || '无法解压 FFmpeg 合并组件。')
+    const extractedExecutable = await findFile(temporaryDirectory, 'ffmpeg.exe')
+    if (!extractedExecutable) throw new Error('FFmpeg 压缩包内未找到 ffmpeg.exe。')
+    await copyFile(extractedExecutable, this.downloadedFfmpegPath)
+    await rm(temporaryDirectory, { recursive: true, force: true })
+    await unlink(archivePath).catch(() => undefined)
     return this.getStatus()
   }
 
@@ -109,8 +156,10 @@ export class MediaDownloader {
     const executablePath = await this.resolveExecutablePath()
     if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
     await mkdir(directory, { recursive: true })
-    const format = mode === 'audio' ? 'bestaudio[ext=m4a]/bestaudio' : 'best[ext=mp4]/best'
-    const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', '--format', format, '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
+    const ffmpegPath = await this.resolveFfmpegPath()
+    const format = mode === 'audio' ? 'bestaudio[ext=m4a]/bestaudio' : 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best'
+    if (mode === 'video' && !ffmpegPath) throw new Error('该网站的音频和视频分开提供，请先安装 FFmpeg 合并组件。')
+    const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', '--format', format, '--merge-output-format', 'mp4', ...(ffmpegPath ? ['--ffmpeg-location', ffmpegPath] : []), '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
     const child = spawn(executablePath, args, { windowsHide: true })
     this.active = child
     this.cancelRequested = false

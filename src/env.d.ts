@@ -64,6 +64,7 @@ interface Window {
     openVirtualPortDownload: () => Promise<{ ok: true }>
     getMediaToolStatus: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
     installMediaTool: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
+    installFfmpeg: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
     analyzeMedia: (url: string) => Promise<{ ok: true; info: MediaInfo } | { ok: false; error: string }>
     chooseMediaDirectory: () => Promise<string | null>
     downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => Promise<{ ok: true } | { ok: false; error: string }>

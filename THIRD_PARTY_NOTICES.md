@@ -5,6 +5,7 @@ DC Toolbox uses and distributes open-source software. Each project remains the p
 | Project | Purpose | License | Website |
 | --- | --- | --- | --- |
 | yt-dlp | Public web media parsing and downloading | Unlicense | https://github.com/yt-dlp/yt-dlp |
+| FFmpeg / BtbN FFmpeg-Builds | Optional audio/video merging component, installed only by user request | LGPL 2.1+ / MIT build scripts | https://ffmpeg.org/ / https://github.com/BtbN/FFmpeg-Builds |
 | Electron | Windows desktop runtime | MIT | https://www.electronjs.org/ |
 | Vue.js | User interface framework | MIT | https://vuejs.org/ |
 | Node SerialPort | Serial-port communication | MIT | https://serialport.io/ |

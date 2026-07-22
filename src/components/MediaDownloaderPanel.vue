@@ -11,6 +11,7 @@ const info = ref<MediaInfo>()
 const progress = ref<MediaProgress>({ state: 'canceled', percent: 0, speed: '', eta: '', message: '' })
 const busy = ref(false)
 const installing = ref(false)
+const installingFfmpeg = ref(false)
 const error = ref('')
 let removeProgress: (() => void) | undefined
 
@@ -34,6 +35,13 @@ async function install(): Promise<void> {
   if (result.ok) status.value = result.status
   else error.value = result.error
   installing.value = false
+}
+async function installFfmpeg(): Promise<void> {
+  installingFfmpeg.value = true; error.value = ''
+  const result = await window.uartScope.installFfmpeg()
+  if (result.ok) status.value = result.status
+  else error.value = result.error
+  installingFfmpeg.value = false
 }
 async function analyze(): Promise<void> {
   busy.value = true; resetPreviousTask()
@@ -67,6 +75,7 @@ onBeforeUnmount(() => removeProgress?.())
       <div class="panel-toolbar"><div><h2>{{ tr('网页媒体下载', 'Web Media Downloader') }}</h2><p>{{ tr('粘贴公开网页地址，解析后下载视频或原始音频', 'Paste a public webpage URL, analyze it, then download video or original audio') }}</p></div><div class="media-tool-actions"><span class="virtual-status" :class="{ ready: status?.installed }">{{ status?.installed ? `yt-dlp ${status.version}` : tr('组件未安装', 'Component not installed') }}</span><button v-if="status?.installed" class="soft-button" :disabled="installing || progress.state === 'running'" @click="install">{{ installing ? tr('更新并校验中…', 'Updating and verifying…') : tr('更新 / 修复组件', 'Update / Repair') }}</button></div></div>
       <div v-if="!status?.installed" class="media-install-card"><strong>{{ tr('需要官方解析组件', 'Official parser required') }}</strong><p>{{ tr('DC Toolbox 将从 yt-dlp 官方 GitHub Release 下载 Windows x64 程序，并在安装前校验 SHA-256。', 'DC Toolbox downloads the Windows x64 executable from the official yt-dlp GitHub Release and verifies SHA-256 before installation.') }}</p><button :disabled="installing" @click="install">{{ installing ? tr('下载并校验中…', 'Downloading and verifying…') : tr('安装 yt-dlp 组件', 'Install yt-dlp') }}</button></div>
       <template v-else>
+        <div v-if="!status.ffmpegAvailable" class="media-install-card"><strong>{{ tr('需要音视频合并组件', 'Audio/video merger required') }}</strong><p>{{ tr('哔哩哔哩、YouTube 等网站通常分别提供视频轨和音频轨。安装开源 FFmpeg LGPL 组件后，软件可自动下载并合并为 MP4。仅在你点击后联网安装。', 'Sites such as BiliBili and YouTube commonly provide separate video and audio tracks. Install the open-source FFmpeg LGPL component to download and merge them into MP4. Installation starts only when you click.') }}</p><button :disabled="installingFfmpeg" @click="installFfmpeg">{{ installingFfmpeg ? tr('下载并安装中…', 'Downloading and installing…') : tr('安装 FFmpeg 合并组件', 'Install FFmpeg merger') }}</button></div>
         <label class="field"><span>{{ tr('网页或视频地址', 'Webpage or video URL') }}</span><div class="media-url-row"><input v-model="url" type="url" placeholder="https://…" @keyup.enter="analyze"><button :disabled="busy || !url.trim()" @click="analyze">{{ busy ? tr('解析中…', 'Analyzing…') : tr('解析链接', 'Analyze') }}</button></div></label>
         <div v-if="info" class="media-info-card"><img v-if="info.thumbnail" :src="info.thumbnail" alt=""><div><span>{{ info.extractor }}</span><h3>{{ info.title }}</h3><p>{{ tr('时长', 'Duration') }}：{{ formatDuration(info.duration) }}</p></div></div>
         <div class="media-options"><label class="field"><span>{{ tr('下载内容', 'Download content') }}</span><select v-model="mode"><option value="video">{{ tr('最佳兼容视频（优先 MP4）', 'Best compatible video (prefer MP4)') }}</option><option value="audio">{{ tr('最佳原始音频（优先 M4A）', 'Best original audio (prefer M4A)') }}</option></select></label><label class="field"><span>{{ tr('保存目录', 'Save directory') }}</span><div class="media-directory-row"><input :value="directory" readonly :placeholder="tr('请选择保存目录', 'Choose a save folder')"><button class="soft-button" @click="chooseDirectory">{{ tr('选择目录', 'Choose') }}</button></div></label></div>

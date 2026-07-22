@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('uartScope', {
   openVirtualPortDownload: () => ipcRenderer.invoke('virtual-port:download'),
   getMediaToolStatus: () => ipcRenderer.invoke('media:status'),
   installMediaTool: () => ipcRenderer.invoke('media:install'),
+  installFfmpeg: () => ipcRenderer.invoke('media:install-ffmpeg'),
   analyzeMedia: (url: string) => ipcRenderer.invoke('media:analyze', url),
   chooseMediaDirectory: () => ipcRenderer.invoke('media:choose-directory'),
   downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => ipcRenderer.invoke('media:download', options),
