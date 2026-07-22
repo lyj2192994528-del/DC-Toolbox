@@ -41,6 +41,7 @@
 - ASCII、HEX、BIN、DEC 多格式发送；20 条起步、最多 100 条的可扩展顺序循环发送
 - 接收支持自适应/固定空闲超时分帧，也可按 LF、CR 或 CRLF 分帧换行
 - DTR、RTS、Break 流控信号控制
+- 网页媒体下载：粘贴公开 HTTPS 网页地址，通过经官方 SHA-256 校验的 yt-dlp 组件解析并下载最佳兼容视频或原始音频
 - 欧姆定律计算器：在电压、电流、电阻、功率中任意输入两个，计算其余两个并支持常用工程单位
 - 同相运放计算器：根据 R1、R2、VIN 计算闭环增益和输出，检查输出饱和并按目标增益反算电阻
 - 电阻分压计算器：可选择求VIN、VOUT、上臂R2或下臂R1，并计算分压比例、静态电流及电阻功耗
@@ -89,8 +90,8 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 
 ## 发布文件
 
-- `artifacts/DC Toolbox-1.0.2-x64-Setup.exe`：Windows 安装程序
-- `artifacts/DC Toolbox-1.0.2-x64-Portable.exe`：免安装便携版
+- `artifacts/DC Toolbox-1.1.0-x64-Setup.exe`：Windows 安装程序
+- `artifacts/DC Toolbox-1.1.0-x64-Portable.exe`：免安装便携版
 
 当前发布未进行商业代码签名，Windows 首次运行时可能显示安全提示。
 当前包含串口终端、实时波形、数据记录、进制转换、CRC/校验、CSV 分析及常用电子计算工具。界面支持简体中文和 English，可在首次欢迎窗口或“视图 → 语言”中切换。串口接收默认使用固定 20 ms 空闲超时分帧，连续高速数据最迟每 100 ms 刷新一次。BLE、USB/HID、TCP/UDP/MQTT 已建立独立模块入口，等待接入真实 Windows 底层能力。
@@ -100,3 +101,9 @@ JustFloat：连续发送小端 Float32 通道数据，每帧末尾追加字节 `
 DC Toolbox 可以检测并打开已安装的 [com0com 官方项目](https://sourceforge.net/projects/com0com/) 管理工具，用虚拟端口对完成无硬件串口回环测试。com0com 是独立的第三方 GPLv2 内核驱动，本项目不打包、不修改也不静默安装该驱动。
 
 建议仅安装与当前 Windows 版本兼容且具有有效数字签名的版本。不要为了安装旧驱动而关闭 Secure Boot 或开启 Windows 测试签名模式。
+
+## 网页媒体下载组件
+
+网页媒体解析由独立开源项目 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 提供。DC Toolbox 不在安装包中捆绑该程序；用户首次使用时可选择从 yt-dlp 官方 GitHub Release 下载，软件会依据官方 `SHA2-256SUMS` 校验 `yt-dlp.exe`。
+
+该功能不支持 DRM、付费墙、私人内容或权限绕过。请只下载你有权保存和使用的公开内容，并遵守网站条款和当地法律。

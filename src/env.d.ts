@@ -32,6 +32,9 @@ type SerialStatusEvent =
 
 interface RecorderStatus { recording: boolean; filePath?: string; bytesWritten: number; error?: string }
 interface VirtualPortStatus { installed: boolean; toolPath?: string; managerPath?: string; output: string; ports: string[]; warning: string }
+interface MediaToolStatus { installed: boolean; version: string; executablePath: string; ffmpegAvailable: boolean }
+interface MediaInfo { title: string; webpageUrl: string; duration: number | null; thumbnail: string; extractor: string }
+interface MediaProgress { state: 'running' | 'completed' | 'canceled' | 'error'; percent: number; speed: string; eta: string; message: string }
 interface PersistedSettings {
   language: 'zh-CN' | 'en-US'
   serial: { path: string; baudRate: string; dataBits: 5 | 6 | 7 | 8; stopBits: 1 | 1.5 | 2; parity: 'none' | 'even' | 'odd' | 'mark' | 'space'; flowControl: 'none' | 'rtscts'; customBaudRates: number[] }
@@ -59,6 +62,13 @@ interface Window {
     openVirtualPortManager: () => Promise<{ ok: true } | { ok: false; error: string }>
     openVirtualPortFolder: () => Promise<{ ok: true } | { ok: false; error: string }>
     openVirtualPortDownload: () => Promise<{ ok: true }>
+    getMediaToolStatus: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
+    installMediaTool: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
+    analyzeMedia: (url: string) => Promise<{ ok: true; info: MediaInfo } | { ok: false; error: string }>
+    chooseMediaDirectory: () => Promise<string | null>
+    downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => Promise<{ ok: true } | { ok: false; error: string }>
+    cancelMediaDownload: () => Promise<{ ok: true; canceled: boolean }>
+    onMediaProgress: (listener: (progress: MediaProgress) => void) => () => void
     openExternal: (url: string) => Promise<{ ok: true } | { ok: false; error: string }>
     setLanguage: (language: 'zh-CN' | 'en-US') => Promise<{ ok: true } | { ok: false; error: string }>
     onLanguageChange: (listener: (language: 'zh-CN' | 'en-US') => void) => () => void

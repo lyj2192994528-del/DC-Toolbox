@@ -473,6 +473,24 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .welcome-actions .welcome-primary { color: #fff; background: #176fd1; }
 @media (max-width: 700px) { .welcome-overlay { padding: 12px; } .welcome-dialog { width: 100%; max-height: calc(100vh - 24px); padding: 24px 18px; } .welcome-brand { grid-template-columns: 76px minmax(0, 1fr); gap: 15px; padding-right: 30px; } .welcome-logo { width: 76px; height: 76px; border-radius: 20px; font-size: 25px; } .welcome-brand h2 { font-size: 19px; } .welcome-contact-grid { grid-template-columns: 1fr; } .welcome-actions { flex-wrap: wrap; } .welcome-actions label { width: 100%; } }
 
+.media-downloader-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, .75fr); gap: 18px; align-items: start; }
+.media-main, .media-guide { padding: 28px; }
+.media-install-card, .media-info-card, .media-progress { margin-top: 20px; padding: 18px; border: 1px solid #dce7f2; border-radius: 14px; background: #f7fbff; }
+.media-install-card p { margin: 8px 0 16px; color: #6f7d92; line-height: 1.65; }
+.media-url-row, .media-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.media-info-card { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 18px; align-items: center; }
+.media-info-card img { width: 180px; height: 102px; border-radius: 10px; object-fit: cover; background: #eaf1f8; }
+.media-info-card span, .media-info-card p { color: #77859a; font-size: 12px; }
+.media-info-card h3 { margin: 8px 0; overflow-wrap: anywhere; }
+.media-options { display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; margin-top: 18px; }
+.media-progress > div { display: flex; justify-content: space-between; gap: 16px; }
+.media-progress progress { width: 100%; height: 12px; margin: 12px 0 6px; accent-color: #1976db; }
+.media-progress small { color: #708096; }
+.media-actions { display: flex; gap: 10px; margin-top: 18px; }
+.media-guide ol { padding-left: 22px; color: #52637a; line-height: 1.8; }
+@media (max-width: 980px) { .media-downloader-layout { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .media-options { grid-template-columns: 1fr; } .media-info-card { grid-template-columns: 1fr; } .media-info-card img { width: 100%; height: auto; } }
+
 
 /* 串口参数是高频操作区，保持信息完整的同时压缩纵向空间。 */
 .connection-panel { padding: 17px 22px; border-radius: 16px; }

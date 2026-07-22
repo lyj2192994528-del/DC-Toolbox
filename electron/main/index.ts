@@ -7,6 +7,7 @@ import { FileRecorder } from './file-recorder'
 import { SettingsManager, type PersistedSettings } from './settings-manager'
 import { PROJECT_INFO } from '../../shared/project-info'
 import { getVirtualPortStatus, openVirtualPortDownload, openVirtualPortFolder, openVirtualPortManager } from './virtual-port-manager'
+import { MediaDownloader } from './media-downloader'
 
 function broadcastSerialStatus(status: unknown): void {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -19,6 +20,7 @@ function broadcast(channel: string, value: unknown): void {
 }
 
 const fileRecorder = new FileRecorder((status) => broadcast('record:status', status))
+const mediaDownloader = new MediaDownloader((progress) => broadcast('media:progress', progress))
 let settingsManager: SettingsManager
 
 const serialManager = new SerialManager(broadcastSerialStatus, (data) => {
@@ -166,6 +168,30 @@ ipcMain.handle('virtual-port:status', async () => {
 ipcMain.handle('virtual-port:open-manager', () => openVirtualPortManager())
 ipcMain.handle('virtual-port:open-folder', () => openVirtualPortFolder())
 ipcMain.handle('virtual-port:download', async () => { await openVirtualPortDownload(); return { ok: true as const } })
+ipcMain.handle('media:status', async () => {
+  try { return { ok: true as const, status: await mediaDownloader.getStatus() } }
+  catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
+ipcMain.handle('media:install', async () => {
+  try { return { ok: true as const, status: await mediaDownloader.install() } }
+  catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
+ipcMain.handle('media:analyze', async (_event, url: unknown) => {
+  try { return { ok: true as const, info: await mediaDownloader.analyze(url) } }
+  catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
+ipcMain.handle('media:choose-directory', async () => {
+  const owner = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+  const result = owner
+    ? await dialog.showOpenDialog(owner, { properties: ['openDirectory', 'createDirectory'] })
+    : await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] })
+  return result.canceled ? null : result.filePaths[0] ?? null
+})
+ipcMain.handle('media:download', async (_event, options: unknown) => {
+  try { await mediaDownloader.download(options); return { ok: true as const } }
+  catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : String(error) } }
+})
+ipcMain.handle('media:cancel', () => ({ ok: true as const, canceled: mediaDownloader.cancel() }))
 ipcMain.handle('app:open-external', async (_event, value: unknown) => {
   if (typeof value !== 'string') return { ok: false as const, error: '链接格式错误。' }
   try {

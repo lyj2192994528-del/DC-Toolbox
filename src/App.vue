@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
+import { BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, MediaDownloaderPanel, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
 import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
 import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
@@ -306,6 +306,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="page-content" :class="{ hidden: activePage !== 'ble' }"><BlePanel kind="ble" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'usb' }"><UsbHidPanel kind="usb" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'networkProtocols' }"><NetworkProtocolsPanel kind="network" /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'mediaDownloader' }"><MediaDownloaderPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'baseConverter' }"><BaseConverter /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'checksum' }"><ChecksumCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'csv' }"><CsvAnalyzer /></div>

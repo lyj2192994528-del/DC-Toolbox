@@ -32,6 +32,17 @@ contextBridge.exposeInMainWorld('uartScope', {
   openVirtualPortManager: () => ipcRenderer.invoke('virtual-port:open-manager'),
   openVirtualPortFolder: () => ipcRenderer.invoke('virtual-port:open-folder'),
   openVirtualPortDownload: () => ipcRenderer.invoke('virtual-port:download'),
+  getMediaToolStatus: () => ipcRenderer.invoke('media:status'),
+  installMediaTool: () => ipcRenderer.invoke('media:install'),
+  analyzeMedia: (url: string) => ipcRenderer.invoke('media:analyze', url),
+  chooseMediaDirectory: () => ipcRenderer.invoke('media:choose-directory'),
+  downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => ipcRenderer.invoke('media:download', options),
+  cancelMediaDownload: () => ipcRenderer.invoke('media:cancel'),
+  onMediaProgress: (listener: (progress: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: unknown): void => listener(progress)
+    ipcRenderer.on('media:progress', handler)
+    return () => ipcRenderer.removeListener('media:progress', handler)
+  },
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
   setLanguage: (language: 'zh-CN' | 'en-US') => ipcRenderer.invoke('app:set-language', language),
   onLanguageChange: (listener: (language: 'zh-CN' | 'en-US') => void) => {
