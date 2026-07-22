@@ -59,6 +59,7 @@ interface Window {
     openVirtualPortManager: () => Promise<{ ok: true } | { ok: false; error: string }>
     openVirtualPortFolder: () => Promise<{ ok: true } | { ok: false; error: string }>
     openVirtualPortDownload: () => Promise<{ ok: true }>
+    openExternal: (url: string) => Promise<{ ok: true } | { ok: false; error: string }>
     setLanguage: (language: 'zh-CN' | 'en-US') => Promise<{ ok: true } | { ok: false; error: string }>
     onLanguageChange: (listener: (language: 'zh-CN' | 'en-US') => void) => () => void
   }

@@ -435,6 +435,9 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 .about-contact-grid div { padding: 18px; background: #f8fbff; }
 .about-contact-grid span, .about-contact-grid small { display: block; color: #8490a4; font-size: 11px; }
 .about-contact-grid strong { display: block; margin: 8px 0; color: #176fd1; overflow-wrap: anywhere; }
+.external-link { display: block; max-width: 100%; margin: 8px 0; padding: 0; border: 0; color: #176fd1; background: transparent; font: inherit; font-weight: 700; text-align: left; overflow-wrap: anywhere; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.external-link:hover { color: #0755ac; }
+.external-link.compact { display: inline; margin: 0; font-size: inherit; font-weight: 600; }
 .group-description { margin-top: 18px; padding: 16px; border-radius: 13px; color: #526176; background: #f2f8ff; }
 .group-description strong { color: #176fd1; }
 .group-description p { margin: 7px 0 0; font-size: 12px; line-height: 1.8; }

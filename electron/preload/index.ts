@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('uartScope', {
   openVirtualPortManager: () => ipcRenderer.invoke('virtual-port:open-manager'),
   openVirtualPortFolder: () => ipcRenderer.invoke('virtual-port:open-folder'),
   openVirtualPortDownload: () => ipcRenderer.invoke('virtual-port:download'),
+  openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
   setLanguage: (language: 'zh-CN' | 'en-US') => ipcRenderer.invoke('app:set-language', language),
   onLanguageChange: (listener: (language: 'zh-CN' | 'en-US') => void) => {
     const handler = (_event: Electron.IpcRendererEvent, language: 'zh-CN' | 'en-US'): void => listener(language)

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import { join } from 'node:path'
 import { access, copyFile, mkdir, writeFile } from 'node:fs/promises'
 import iconv from 'iconv-lite'
@@ -166,6 +166,17 @@ ipcMain.handle('virtual-port:status', async () => {
 ipcMain.handle('virtual-port:open-manager', () => openVirtualPortManager())
 ipcMain.handle('virtual-port:open-folder', () => openVirtualPortFolder())
 ipcMain.handle('virtual-port:download', async () => { await openVirtualPortDownload(); return { ok: true as const } })
+ipcMain.handle('app:open-external', async (_event, value: unknown) => {
+  if (typeof value !== 'string') return { ok: false as const, error: '链接格式错误。' }
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:') return { ok: false as const, error: '仅允许打开 HTTPS 链接。' }
+    await shell.openExternal(url.toString())
+    return { ok: true as const }
+  } catch {
+    return { ok: false as const, error: '链接无效。' }
+  }
+})
 
 interface SplashState { window: BrowserWindow; startedAt: number }
 

@@ -156,6 +156,10 @@ async function chooseLanguage(value: AppLanguage): Promise<void> {
   await window.uartScope.setLanguage(value)
 }
 
+function openRepository(): void {
+  if (PROJECT_INFO.githubUrl) void window.uartScope.openExternal(PROJECT_INFO.githubUrl)
+}
+
 let removeStatusListener: (() => void) | undefined
 let removeLanguageListener: (() => void) | undefined
 
@@ -217,7 +221,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
         <div class="welcome-contact-grid">
           <div><span>{{ t('welcome.email') }}</span><strong>{{ PROJECT_INFO.email }}</strong></div>
           <div><span>{{ t('welcome.group') }}</span><strong>{{ PROJECT_INFO.qqGroup }}</strong><small>{{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</small></div>
-          <div><span>{{ t('welcome.repo') }}</span><strong>{{ PROJECT_INFO.githubUrl || t('welcome.pending') }}</strong></div>
+          <div><span>{{ t('welcome.repo') }}</span><button class="external-link" type="button" @click="openRepository">{{ PROJECT_INFO.githubUrl }}</button></div>
         </div>
         <div class="welcome-group-description"><strong>{{ t('welcome.groupIntro') }}</strong><p>{{ language === 'en-US' ? PROJECT_INFO.qqGroupDescriptionEn : PROJECT_INFO.qqGroupDescription }}</p></div>
         <div class="welcome-actions"><label><input v-model="hideWelcomeNextTime" type="checkbox"> {{ t('welcome.hide') }}</label><button @click="activePage = 'about'; closeWelcome()">{{ t('welcome.about') }}</button><button class="welcome-primary" @click="closeWelcome">{{ t('welcome.enter') }}</button></div>
@@ -316,6 +320,6 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="page-content" :class="{ hidden: activePage !== 'about' }"><AboutPanel /></div>
       </main>
     </div>
-    <footer class="project-promo-bar"><strong>{{ language === 'en-US' ? PROJECT_INFO.fullNameEn : PROJECT_INFO.fullName }}</strong><span>{{ tr('邮箱', 'Email') }}: {{ PROJECT_INFO.email }}</span><span>{{ tr('QQ群', 'QQ Group') }}: {{ PROJECT_INFO.qqGroup }} · {{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</span><span>GitHub: {{ PROJECT_INFO.githubUrl || tr('待添加', 'Not configured') }}</span></footer>
+    <footer class="project-promo-bar"><strong>{{ language === 'en-US' ? PROJECT_INFO.fullNameEn : PROJECT_INFO.fullName }}</strong><span>{{ tr('邮箱', 'Email') }}: {{ PROJECT_INFO.email }}</span><span>{{ tr('QQ群', 'QQ Group') }}: {{ PROJECT_INFO.qqGroup }} · {{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</span><span>GitHub: <button class="external-link compact" type="button" @click="openRepository">{{ PROJECT_INFO.githubUrl }}</button></span></footer>
   </div>
 </template>

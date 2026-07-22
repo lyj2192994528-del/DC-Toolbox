@@ -2,6 +2,10 @@
 import { PROJECT_INFO } from '../../shared/project-info'
 import { useI18n } from '@/i18n'
 const { language, tr } = useI18n()
+
+function openRepository(): void {
+  if (PROJECT_INFO.githubUrl) void window.uartScope.openExternal(PROJECT_INFO.githubUrl)
+}
 </script>
 
 <template>
@@ -13,7 +17,7 @@ const { language, tr } = useI18n()
       <div class="about-contact-grid">
         <div><span>{{ tr('作者邮箱', 'Email') }}</span><strong>{{ PROJECT_INFO.email }}</strong><small>{{ tr('问题反馈、功能建议与合作联系', 'Bug reports, feature requests and collaboration') }}</small></div>
         <div><span>{{ tr('QQ 交流群', 'QQ Group') }}</span><strong>{{ PROJECT_INFO.qqGroup }}</strong><small>{{ language === 'en-US' ? PROJECT_INFO.qqGroupNameEn : PROJECT_INFO.qqGroupName }}</small></div>
-        <div><span>{{ tr('GitHub 仓库', 'GitHub Repository') }}</span><strong>{{ PROJECT_INFO.githubUrl || tr('待添加', 'Not configured') }}</strong><small>{{ tr('创建仓库后填写统一配置', 'Configure after creating the repository') }}</small></div>
+        <div><span>{{ tr('GitHub 仓库', 'GitHub Repository') }}</span><button class="external-link" type="button" @click="openRepository">{{ PROJECT_INFO.githubUrl }}</button><small>{{ tr('查看源码、提交问题与下载正式版本', 'Browse source, report issues and download releases') }}</small></div>
       </div>
       <div class="group-description"><strong>{{ tr('群介绍', 'Community') }}</strong><p>{{ language === 'en-US' ? PROJECT_INFO.qqGroupDescriptionEn : PROJECT_INFO.qqGroupDescription }}</p></div>
     </div>
