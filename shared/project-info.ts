@@ -5,7 +5,7 @@
 export const PROJECT_INFO = {
   productName: 'DC Toolbox',
   fullName: 'DC Toolbox — 嵌入式开发调试工具箱',
-  version: '1.0.0',
+  version: '1.0.1',
   email: '2192994528@qq.com',
   qqGroup: '698749242',
   qqGroupName: 'DC Toolbox 嵌入式开发交流群',

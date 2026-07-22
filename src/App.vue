@@ -228,7 +228,13 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
         <h1>DC Toolbox</h1>
         <p class="subtitle">{{ t('app.subtitle') }}</p>
       </div>
-      <span class="status-pill" :class="{ online: isConnected, danger: connectionState === 'error' }">● {{ connectionMessage }}</span>
+      <div class="header-actions">
+        <div class="language-switch" :aria-label="t('welcome.language')">
+          <button :class="{ active: language === 'zh-CN' }" @click="chooseLanguage('zh-CN')">中文</button>
+          <button :class="{ active: language === 'en-US' }" @click="chooseLanguage('en-US')">EN</button>
+        </div>
+        <span class="status-pill" :class="{ online: isConnected, danger: connectionState === 'error' }">● {{ connectionMessage }}</span>
+      </div>
     </header>
 
     <div class="toolbox-layout">

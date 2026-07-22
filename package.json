@@ -1,6 +1,6 @@
 {
   "name": "dc-toolbox",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "面向嵌入式开发工程师的 Windows 调试工具箱",
   "author": "LYJ0807",
   "main": "out/main/index.js",

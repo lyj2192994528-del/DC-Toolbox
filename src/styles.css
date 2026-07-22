@@ -32,6 +32,10 @@ button, select, input { font: inherit; }
 }
 
 .app-header { margin-bottom: 16px; padding: 0 4px; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.language-switch { display: flex; padding: 3px; border: 1px solid #dbe5f0; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px rgb(31 53 84 / 5%); }
+.language-switch button { min-width: 44px; padding: 6px 10px; border: 0; border-radius: 9px; color: #66748a; background: transparent; font-size: 12px; box-shadow: none; }
+.language-switch button.active { color: #fff; background: #176fd1; }
 
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 5px; color: #152033; font-size: 34px; line-height: 1.2; }

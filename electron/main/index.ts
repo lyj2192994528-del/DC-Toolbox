@@ -256,7 +256,6 @@ async function setApplicationLanguage(language: AppLanguage): Promise<void> {
 
 function installApplicationMenu(language: AppLanguage): void {
   const en = language === 'en-US'
-  const chooseLanguage = (value: AppLanguage): void => { void setApplicationLanguage(value) }
   const template: MenuItemConstructorOptions[] = [
     { label: en ? 'File' : '文件', submenu: [{ label: en ? 'Exit' : '退出', accelerator: 'Alt+F4', click: () => app.quit() }] },
     { label: en ? 'Edit' : '编辑', submenu: [
@@ -266,11 +265,6 @@ function installApplicationMenu(language: AppLanguage): void {
     { label: en ? 'View' : '视图', submenu: [
       { label: en ? 'Reload' : '重新加载', role: 'reload' }, { type: 'separator' },
       { label: en ? 'Zoom In' : '放大', role: 'zoomIn' }, { label: en ? 'Zoom Out' : '缩小', role: 'zoomOut' }, { label: en ? 'Reset Zoom' : '重置缩放', role: 'resetZoom' },
-      { type: 'separator' },
-      { label: en ? 'Language' : '语言', submenu: [
-        { label: '简体中文', type: 'radio', checked: language === 'zh-CN', click: () => chooseLanguage('zh-CN') },
-        { label: 'English', type: 'radio', checked: language === 'en-US', click: () => chooseLanguage('en-US') }
-      ] },
       { type: 'separator' }, { label: en ? 'Toggle Full Screen' : '切换全屏', role: 'togglefullscreen' }
     ] },
     { label: en ? 'Window' : '窗口', submenu: [{ label: en ? 'Minimize' : '最小化', role: 'minimize' }, { label: en ? 'Close' : '关闭', role: 'close' }] },
