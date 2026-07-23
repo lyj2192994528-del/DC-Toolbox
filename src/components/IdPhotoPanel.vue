@@ -172,6 +172,12 @@ function schedulePreview(): void {
       estimatedBytes.value = encoded.blob.size
       estimatedQuality.value = Math.round(encoded.quality * 100)
       sizeTargetReached.value = encoded.targetReached
+    } catch (cause) {
+      if (sequence !== estimateSequence) return
+      estimatedBytes.value = 0
+      estimatedQuality.value = 0
+      sizeTargetReached.value = true
+      error.value = cause instanceof Error ? cause.message : String(cause)
     } finally {
       if (sequence === estimateSequence) estimating.value = false
     }
@@ -210,7 +216,12 @@ async function handleFile(event: Event): Promise<void> {
   processing.value = true
   error.value = ''
   hasPhoto.value = false
+  estimateSequence += 1
+  if (estimateTimer) clearTimeout(estimateTimer)
   estimatedBytes.value = 0
+  estimatedQuality.value = 0
+  sizeTargetReached.value = true
+  estimating.value = false
   try {
     if (sourceObjectUrl) URL.revokeObjectURL(sourceObjectUrl)
     sourceObjectUrl = URL.createObjectURL(file)
