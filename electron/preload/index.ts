@@ -35,9 +35,9 @@ contextBridge.exposeInMainWorld('uartScope', {
   getMediaToolStatus: () => ipcRenderer.invoke('media:status'),
   installMediaTool: () => ipcRenderer.invoke('media:install'),
   installFfmpeg: () => ipcRenderer.invoke('media:install-ffmpeg'),
-  analyzeMedia: (options: { url: string; cookieSource: 'none' | 'edge' | 'chrome' }) => ipcRenderer.invoke('media:analyze', options),
+  analyzeMedia: (url: string) => ipcRenderer.invoke('media:analyze', url),
   chooseMediaDirectory: () => ipcRenderer.invoke('media:choose-directory'),
-  downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio'; cookieSource: 'none' | 'edge' | 'chrome' }) => ipcRenderer.invoke('media:download', options),
+  downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => ipcRenderer.invoke('media:download', options),
   cancelMediaDownload: () => ipcRenderer.invoke('media:cancel'),
   onMediaProgress: (listener: (progress: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, progress: unknown): void => listener(progress)

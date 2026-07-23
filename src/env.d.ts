@@ -65,9 +65,9 @@ interface Window {
     getMediaToolStatus: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
     installMediaTool: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
     installFfmpeg: () => Promise<{ ok: true; status: MediaToolStatus } | { ok: false; error: string }>
-    analyzeMedia: (options: { url: string; cookieSource: 'none' | 'edge' | 'chrome' }) => Promise<{ ok: true; info: MediaInfo } | { ok: false; error: string }>
+    analyzeMedia: (url: string) => Promise<{ ok: true; info: MediaInfo } | { ok: false; error: string }>
     chooseMediaDirectory: () => Promise<string | null>
-    downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio'; cookieSource: 'none' | 'edge' | 'chrome' }) => Promise<{ ok: true } | { ok: false; error: string }>
+    downloadMedia: (options: { url: string; directory: string; mode: 'video' | 'audio' }) => Promise<{ ok: true } | { ok: false; error: string }>
     cancelMediaDownload: () => Promise<{ ok: true; canceled: boolean }>
     onMediaProgress: (listener: (progress: MediaProgress) => void) => () => void
     chooseAudioInput: () => Promise<string | null>

@@ -18,7 +18,7 @@ function isHttpsUrl(value: string): boolean {
   try { return new URL(value).protocol === 'https:' } catch { return false }
 }
 
-/** 支持直接网址，也支持抖音等应用复制出来的整段分享文案。 */
+/** 支持直接网址，也支持应用复制出来的整段分享文案。 */
 function extractPublicHttpsUrl(value: unknown): string {
   const text = typeof value === 'string' ? value.trim() : ''
   if (isHttpsUrl(text)) return text
@@ -27,19 +27,16 @@ function extractPublicHttpsUrl(value: unknown): string {
   return isHttpsUrl(cleaned) ? cleaned : ''
 }
 
-function cookieArguments(source: unknown): string[] {
-  return source === 'edge' || source === 'chrome'
-    ? ['--cookies-from-browser', source]
-    : []
+function isDouyinUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase()
+    return hostname === 'douyin.com' || hostname.endsWith('.douyin.com')
+  } catch { return false }
 }
 
 /** 将第三方命令行错误转换为用户可执行的说明，同时保留未知错误原文。 */
 function friendlyMediaError(stderr: string): string {
   const detail = stderr.trim()
-  if (/Unsupported URL: https:\/\/www\.douyin\.com\/note\//i.test(detail)) return '该链接是抖音“图文作品”（note），不是视频。当前网页媒体工具只能下载抖音视频，暂不支持图文笔记中的图片。'
-  if (/Fresh cookies .* are needed/i.test(detail)) return '抖音要求新鲜 Cookie。请在“网站登录状态”中选择已登录抖音的 Edge 或 Chrome，完全关闭该浏览器后再解析。'
-  if (/Could not copy Chrome cookie database/i.test(detail)) return '浏览器正在占用 Cookie 数据库。请完全退出所选 Edge 或 Chrome（包括后台进程）后重试。'
-  if (/Failed to decrypt with DPAPI/i.test(detail)) return 'Windows 无法解密该浏览器的 Cookie。请使用当前 Windows 用户运行 DC Toolbox，并确认浏览器登录状态。'
   return detail || '无法解析该网页。'
 }
 
@@ -159,12 +156,12 @@ export class MediaDownloader {
   }
 
   async analyze(value: unknown): Promise<MediaInfo> {
-    const request = value && typeof value === 'object' ? value as Record<string, unknown> : { url: value }
-    const url = extractPublicHttpsUrl(request.url)
+    const url = extractPublicHttpsUrl(value)
     if (!isHttpsUrl(url)) throw new Error('请输入有效的 HTTPS 网页地址。')
+    if (isDouyinUrl(url)) throw new Error('DC Toolbox 暂不支持抖音视频或图文作品下载。请使用抖音官方提供的保存或分享功能。')
     const executablePath = await this.resolveExecutablePath()
     if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
-    const result = await runCapture(executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', ...cookieArguments(request.cookieSource), url])
+    const result = await runCapture(executablePath, ['--ignore-config', '--no-playlist', '--skip-download', '--dump-single-json', '--no-warnings', url])
     if (result.code !== 0) throw new Error(friendlyMediaError(result.stderr))
     const data = JSON.parse(result.stdout) as Record<string, unknown>
     return {
@@ -184,6 +181,7 @@ export class MediaDownloader {
     const directory = typeof options.directory === 'string' ? options.directory : ''
     const mode = options.mode === 'audio' ? 'audio' : 'video'
     if (!isHttpsUrl(url)) throw new Error('请输入有效的 HTTPS 网页地址。')
+    if (isDouyinUrl(url)) throw new Error('DC Toolbox 暂不支持抖音视频或图文作品下载。请使用抖音官方提供的保存或分享功能。')
     if (!directory) throw new Error('请先选择保存目录。')
     const executablePath = await this.resolveExecutablePath()
     if (!await exists(executablePath)) throw new Error('请先安装 yt-dlp 解析组件。')
@@ -191,7 +189,7 @@ export class MediaDownloader {
     const ffmpegPath = await this.resolveFfmpegPath()
     const format = mode === 'audio' ? 'bestaudio[ext=m4a]/bestaudio' : 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best'
     if (mode === 'video' && !ffmpegPath) throw new Error('该网站的音频和视频分开提供，请先安装 FFmpeg 合并组件。')
-    const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', ...cookieArguments(options.cookieSource), '--format', format, '--merge-output-format', 'mp4', ...(ffmpegPath ? ['--ffmpeg-location', ffmpegPath] : []), '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
+    const args = ['--ignore-config', '--no-playlist', '--windows-filenames', '--newline', '--no-warnings', '--format', format, '--merge-output-format', 'mp4', ...(ffmpegPath ? ['--ffmpeg-location', ffmpegPath] : []), '--output', join(directory, '%(title).180B [%(id)s].%(ext)s'), '--progress-template', 'download:%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s', url]
     const child = spawn(executablePath, args, { windowsHide: true })
     this.active = child
     this.cancelRequested = false
