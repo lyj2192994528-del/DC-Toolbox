@@ -21,6 +21,7 @@
     "vue": "3.5.40"
   },
   "devDependencies": {
+    "@mediapipe/selfie_segmentation": "0.1.1675465747",
     "@types/node": "26.1.1",
     "@vitejs/plugin-vue": "6.0.8",
     "@vue/tsconfig": "0.9.1",
@@ -55,6 +56,14 @@
       {
         "from": "build/tools/FFMPEG-LICENSE.txt",
         "to": "tools/FFMPEG-LICENSE.txt"
+      },
+      {
+        "from": "build/licenses/MEDIAPIPE-APACHE-2.0.txt",
+        "to": "licenses/MEDIAPIPE-APACHE-2.0.txt"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "licenses/THIRD_PARTY_NOTICES.md"
       }
     ],
     "asar": false,

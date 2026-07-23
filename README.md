@@ -42,6 +42,8 @@
 - 接收支持自适应/固定空闲超时分帧，也可按 LF、CR 或 CRLF 分帧换行
 - DTR、RTS、Break 流控信号控制
 - 网页媒体下载：粘贴公开 HTTPS 网页地址，通过经官方 SHA-256 校验的 yt-dlp 组件解析并下载最佳兼容视频或原始音频
+- 音频提取：从本地媒体提取 MP3、M4A 或 WAV，不修改源文件
+- 一寸照制作：使用本地 MediaPipe 人像分割生成 25×35 mm、295×413 px、300 DPI JPG，支持白/蓝/红/自定义背景、构图调整、目标文件大小和 JPEG 质量控制
 - 欧姆定律计算器：在电压、电流、电阻、功率中任意输入两个，计算其余两个并支持常用工程单位
 - 同相运放计算器：根据 R1、R2、VIN 计算闭环增益和输出，检查输出饱和并按目标增益反算电阻
 - 电阻分压计算器：可选择求VIN、VOUT、上臂R2或下臂R1，并计算分压比例、静态电流及电阻功耗
@@ -109,3 +111,7 @@ DC Toolbox 可以检测并打开已安装的 [com0com 官方项目](https://sour
 哔哩哔哩、YouTube 等网站通常分别提供视频轨和音频轨。正式安装包已内置经过官方 SHA-256 校验的 FFmpeg-Builds Windows x64 LGPL 组件，可自动下载并合并为 MP4，无需首次安装。用户仍可主动选择“更新 / 修复 FFmpeg”，软件不会强制或静默更新。
 
 该功能不支持 DRM、付费墙、私人内容或权限绕过。请只下载你有权保存和使用的公开内容，并遵守网站条款和当地法律。
+
+## 一寸照与开源人像分割
+
+一寸照工具使用 [MediaPipe Selfie Segmentation](https://github.com/google-ai-edge/mediapipe) 0.1.1675465747 在本机完成人物分割，照片不会上传到 DC Toolbox 或第三方服务器。该组件采用 Apache License 2.0；完整许可随安装包放在 `resources/licenses/MEDIAPIPE-APACHE-2.0.txt`，项目声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。目标文件大小通过 JPEG 质量搜索实现，是“尽量不超过”的近似值，具体大小取决于照片内容。

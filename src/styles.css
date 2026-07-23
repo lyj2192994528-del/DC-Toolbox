@@ -501,6 +501,54 @@ select:focus, input:focus { border-color: #176fd1; box-shadow: 0 0 0 3px rgb(23 
 @media (max-width: 980px) { .media-downloader-layout { grid-template-columns: 1fr; } }
 @media (max-width: 680px) { .media-options { grid-template-columns: 1fr; } .media-info-card { grid-template-columns: 1fr; } .media-info-card img { width: 100%; height: auto; } }
 
+/* 一寸照工具：预览保持 25:35 比例，控制区在窄窗口自动下移。 */
+.id-photo-layout { display: grid; grid-template-columns: minmax(620px, 1.45fr) minmax(280px, .55fr); gap: 18px; align-items: start; }
+.id-photo-main { min-width: 0; }
+.license-badge { min-width: 0; padding: 7px 11px; border: 1px solid #bfe7d5; border-radius: 999px; color: #08734d; background: #e8f8ef; font-size: 11px; }
+.license-badge:hover:not(:disabled) { color: #055d3e; background: #d9f3e6; }
+.id-photo-workbench { display: grid; grid-template-columns: minmax(250px, .7fr) minmax(330px, 1.3fr); gap: 28px; align-items: start; }
+.id-photo-preview-column { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 11px; }
+.id-photo-preview { position: relative; width: min(295px, 100%); overflow: hidden; border: 1px solid #dce5ef; border-radius: 15px; background: #438edb; box-shadow: 0 10px 26px rgb(23 52 84 / 13%); aspect-ratio: 295 / 413; }
+.id-photo-preview canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+.id-photo-preview.empty canvas { opacity: .25; }
+.id-photo-placeholder { position: absolute; inset: 0; display: grid; align-content: center; gap: 8px; padding: 24px; color: #fff; background: linear-gradient(160deg, rgb(8 48 95 / 35%), rgb(14 103 151 / 20%)); text-align: center; }
+.id-photo-placeholder span { font-size: 11px; line-height: 1.6; opacity: .85; }
+.id-photo-preview-column > small { color: #7c899d; font-size: 10px; text-align: center; }
+.id-photo-source-name { max-width: 100%; overflow: hidden; color: #7c899d; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+.id-photo-controls { display: grid; gap: 13px; min-width: 0; }
+.id-photo-control-section { padding: 15px 16px; border: 1px solid #e2e9f1; border-radius: 13px; background: #f8fbff; }
+.id-photo-control-section h3 { margin: 0 0 12px; color: #26384e; font-size: 14px; }
+.id-photo-control-section > label:not(.field) { margin: 10px 0 0; }
+.id-photo-control-section > label > span { display: flex; justify-content: space-between; margin-bottom: 5px; color: #667287; font-size: 11px; }
+.id-photo-control-section > label > span b { color: #176fd1; font-family: Consolas, monospace; }
+.id-photo-control-section input[type="range"] { height: 24px; padding: 0; border: 0; background: transparent; box-shadow: none; accent-color: #176fd1; }
+.id-photo-control-section .soft-button { margin-top: 9px; }
+.background-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.background-presets button, .custom-color { display: flex; min-width: 0; min-height: 38px; align-items: center; justify-content: center; gap: 6px; margin: 0; padding: 7px; border: 1px solid #dfe7f0; border-radius: 9px; color: #59677b; background: #fff; font-size: 11px; font-weight: 650; cursor: pointer; }
+.background-presets button:hover:not(:disabled), .custom-color:hover { color: #176fd1; background: #f2f8ff; }
+.background-presets button.active, .custom-color.active { border-color: #70aae8; color: #176fd1; box-shadow: 0 0 0 2px rgb(23 111 209 / 9%); }
+.background-presets i { width: 17px; height: 17px; flex: 0 0 17px; border: 1px solid rgb(25 45 72 / 18%); border-radius: 50%; }
+.custom-color input { width: 19px; height: 19px; flex: 0 0 19px; padding: 0; overflow: hidden; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.custom-color span { overflow: hidden; text-overflow: ellipsis; }
+.output-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 12px; padding: 4px; border-radius: 10px; background: #edf1f6; }
+.output-mode-tabs label { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; padding: 8px; border-radius: 8px; color: #667287; font-size: 11px; cursor: pointer; }
+.output-mode-tabs label.active { color: #176fd1; background: #fff; box-shadow: 0 2px 8px rgb(31 53 84 / 7%); }
+.output-mode-tabs input { width: auto; margin: 0; }
+.id-photo-control-section .field { margin: 0; }
+.id-photo-control-section .field select { padding: 9px 11px; }
+.id-photo-estimate { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 5px 12px; margin-top: 12px; padding: 11px 12px; border-radius: 10px; background: #edf6ff; }
+.id-photo-estimate span { color: #667287; font-size: 11px; }
+.id-photo-estimate strong { color: #176fd1; font-size: 18px; }
+.id-photo-estimate small { grid-column: 1 / -1; color: #8390a3; font-size: 10px; }
+.id-photo-export { width: 100%; margin-top: 12px; }
+.id-photo-guide ol { padding-left: 21px; color: #526176; font-size: 13px; line-height: 1.9; }
+.id-photo-privacy { margin-top: 18px; padding: 15px; border-radius: 12px; color: #526176; background: #edf8f3; }
+.id-photo-privacy strong { color: #08734d; }
+.id-photo-privacy p { margin: 7px 0 0; font-size: 11px; line-height: 1.75; }
+@media (max-width: 1120px) { .id-photo-layout { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .id-photo-workbench { grid-template-columns: 1fr; } .background-presets { grid-template-columns: 1fr 1fr; } }
+
 
 /* 串口参数是高频操作区，保持信息完整的同时压缩纵向空间。 */
 .connection-panel { padding: 17px 22px; border-radius: 16px; }

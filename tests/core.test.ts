@@ -13,6 +13,7 @@ import { calculateEquivalentCapacitance, capacitanceCode, solveMissingCapacitanc
 import { calculateLedResistor } from '../src/calculators/ledResistor.ts'
 import { calculateChecksum, convertIntegerBase, parseByteText } from '../src/calculators/dataTools.ts'
 import { MAX_RECEIVE_BATCH_BYTES, receiveFlushDelay } from '../src/buffers/receiveBatching.ts'
+import { encodePhoto, formatFileSize, ID_PHOTO_HEIGHT, ID_PHOTO_WIDTH } from '../src/tools/id-photo/image.ts'
 
 test('连续高速串口数据即使没有空闲间隔也会在 100 ms 内刷新', () => {
   assert.equal(receiveFlushDelay(1000, 1010, 20, 100), 20)
@@ -168,4 +169,19 @@ test('LED 限流计算推荐不超过目标电流的 E24 电阻和安全功率',
   assert.equal(result.actualCurrent, 0.01)
   assert.equal(result.recommendedPowerRating, 0.125)
   assert.throws(() => calculateLedResistor(5, 2, 0.01, 3), /必须大于/)
+})
+
+test('一寸照使用标准像素并按目标大小寻找最高可用 JPEG 质量', async () => {
+  const simulatedCanvas = {
+    toBlob(callback: BlobCallback, _type?: string, quality?: number): void {
+      const bytes = Math.round(20_000 + (quality ?? 0.92) * 180_000)
+      callback(new Blob([new Uint8Array(bytes)], { type: 'image/jpeg' }))
+    }
+  } as unknown as HTMLCanvasElement
+  const encoded = await encodePhoto(simulatedCanvas, { mode: 'target-size', targetKilobytes: 100, qualityPercent: 90 })
+  assert.equal(ID_PHOTO_WIDTH, 295)
+  assert.equal(ID_PHOTO_HEIGHT, 413)
+  assert.ok(encoded.blob.size <= 100 * 1024)
+  assert.ok(encoded.quality > 0.4 && encoded.quality < 0.5)
+  assert.equal(formatFileSize(102_400), '100 KB')
 })

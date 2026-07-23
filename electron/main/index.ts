@@ -1,5 +1,6 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell, type MenuItemConstructorOptions } from 'electron'
-import { join } from 'node:path'
+import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, shell, type MenuItemConstructorOptions } from 'electron'
+import { basename, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { access, copyFile, mkdir, writeFile } from 'node:fs/promises'
 import iconv from 'iconv-lite'
 import { SerialManager, type SerialOpenOptions } from './serial-manager'
@@ -8,6 +9,25 @@ import { SettingsManager, type PersistedSettings } from './settings-manager'
 import { PROJECT_INFO } from '../../shared/project-info'
 import { getVirtualPortStatus, openVirtualPortDownload, openVirtualPortFolder, openVirtualPortManager } from './virtual-port-manager'
 import { MediaDownloader } from './media-downloader'
+
+const LOCAL_RESOURCE_SCHEME = 'dc-toolbox-resource'
+
+protocol.registerSchemesAsPrivileged([{
+  scheme: LOCAL_RESOURCE_SCHEME,
+  privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true }
+}])
+
+function installLocalResourceProtocol(): void {
+  protocol.handle(LOCAL_RESOURCE_SCHEME, (request) => {
+    const url = new URL(request.url)
+    const fileName = decodeURIComponent(url.pathname.slice(1))
+    if (url.hostname !== 'renderer-assets' || fileName !== basename(fileName) || !/^[a-zA-Z0-9_.-]+$/.test(fileName)) {
+      return new Response('Not found', { status: 404 })
+    }
+    const localFile = join(app.getAppPath(), 'out', 'renderer', 'assets', fileName)
+    return net.fetch(pathToFileURL(localFile).toString())
+  })
+}
 
 function broadcastSerialStatus(status: unknown): void {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -323,7 +343,7 @@ function installApplicationMenu(language: AppLanguage): void {
     ] },
     { label: en ? 'Window' : '窗口', submenu: [{ label: en ? 'Minimize' : '最小化', role: 'minimize' }, { label: en ? 'Close' : '关闭', role: 'close' }] },
     { label: en ? 'Help' : '帮助', submenu: [
-      { label: en ? 'Open-Source Components' : '开源组件', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'Open-Source Components' : '开源组件', message: en ? 'Open source used by DC Toolbox' : 'DC Toolbox 使用的主要开源项目', detail: en ? 'yt-dlp — Web media parser/downloader — Unlicense\nFFmpeg — Optional audio/video merging — LGPL 2.1+\nElectron — Desktop runtime — MIT\nVue.js — User interface — MIT\nNode SerialPort — Serial communication — MIT\niconv-lite — Text encoding — MIT\n\nProject links and full notices are available in the GitHub repository.' : 'yt-dlp — 网页媒体解析与下载 — Unlicense\nFFmpeg — 可选音视频合并组件 — LGPL 2.1+\nElectron — 桌面应用运行时 — MIT\nVue.js — 用户界面框架 — MIT\nNode SerialPort — 串口通信 — MIT\niconv-lite — 字符编码转换 — MIT\n\n项目链接与完整声明可在 GitHub 仓库的 THIRD_PARTY_NOTICES.md 中查看。' }) } },
+      { label: en ? 'Open-Source Components' : '开源组件', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'Open-Source Components' : '开源组件', message: en ? 'Open source used by DC Toolbox' : 'DC Toolbox 使用的主要开源项目', detail: en ? 'MediaPipe Selfie Segmentation 0.1.1675465747 — Local person segmentation — Apache-2.0\nyt-dlp — Web media parser/downloader — Unlicense\nFFmpeg — Optional audio/video merging — LGPL 2.1+\nElectron — Desktop runtime — MIT\nVue.js — User interface — MIT\nNode SerialPort — Serial communication — MIT\niconv-lite — Text encoding — MIT\n\nFull notices are installed under resources/licenses and are also available in the GitHub repository.' : 'MediaPipe Selfie Segmentation 0.1.1675465747 — 本地人像分割 — Apache-2.0\nyt-dlp — 网页媒体解析与下载 — Unlicense\nFFmpeg — 可选音视频合并组件 — LGPL 2.1+\nElectron — 桌面应用运行时 — MIT\nVue.js — 用户界面框架 — MIT\nNode SerialPort — 串口通信 — MIT\niconv-lite — 字符编码转换 — MIT\n\n完整许可随软件安装在 resources/licenses，并可在 GitHub 仓库的 THIRD_PARTY_NOTICES.md 中查看。' }) } },
       { type: 'separator' },
       { label: en ? 'About & Contact' : '关于与联系', click: () => { void dialog.showMessageBox({ type: 'info', title: en ? 'About DC Toolbox' : '关于 DC Toolbox', message: en ? 'DC Toolbox — Embedded Development & Debugging Toolkit' : PROJECT_INFO.fullName, detail: en ? `Version ${app.getVersion()}\nEmail: ${PROJECT_INFO.email}\nQQ Group: ${PROJECT_INFO.qqGroup}\nGitHub: ${PROJECT_INFO.githubUrl || 'Coming soon'}` : `版本 ${app.getVersion()}\n作者邮箱：${PROJECT_INFO.email}\nQQ群：${PROJECT_INFO.qqGroup}\n群名：${PROJECT_INFO.qqGroupName}\nGitHub：${PROJECT_INFO.githubUrl || '待添加'}` }) } }
     ] }
@@ -351,6 +371,7 @@ async function migrateLegacySettings(): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  installLocalResourceProtocol()
   const splashState = createSplashWindow()
   await migrateLegacySettings()
   settingsManager = new SettingsManager(join(app.getPath('userData'), 'settings.json'))

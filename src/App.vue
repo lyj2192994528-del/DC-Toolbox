@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { AudioExtractorPanel, BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, LedResistorCalculator, MediaDownloaderPanel, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
+import { AudioExtractorPanel, BaseConverter, BlePanel, CapacitanceConverter, CapacitorNetworkCalculator, ChecksumCalculator, CsvAnalyzer, IdPhotoPanel, LedResistorCalculator, MediaDownloaderPanel, NetworkProtocolsPanel, OhmsLawCalculator, OpAmpCalculator, PowerCalculator, RecordingPanel, ResistorDividerCalculator, ResistorNetworkCalculator, TerminalPanel, UsbHidPanel, VirtualPortPanel, WaveformPanel } from '@/tools'
 import { toolCount, toolGroups, type ToolPageId } from '@/tools/catalog'
 import AboutPanel from '@/components/AboutPanel.vue'
 import { PROJECT_INFO } from '../shared/project-info'
@@ -186,7 +186,7 @@ watch([selectedPath, baudRateText, dataBits, stopBits, parity, flowControl, cust
   saveTimer = setTimeout(() => {
     settingsCache = {
       ...settingsCache!,
-      serial: { path: selectedPath.value, baudRate: baudRateText.value, dataBits: dataBits.value, stopBits: stopBits.value, parity: parity.value, flowControl: flowControl.value, customBaudRates: customBaudRates.value }
+      serial: { path: selectedPath.value, baudRate: baudRateText.value, dataBits: dataBits.value, stopBits: stopBits.value, parity: parity.value, flowControl: flowControl.value, customBaudRates: [...customBaudRates.value] }
     }
     void window.uartScope.setSettings(settingsCache)
   }, 300)
@@ -325,6 +325,7 @@ onBeforeUnmount(() => { removeStatusListener?.(); removeLanguageListener?.(); if
     <div class="page-content" :class="{ hidden: activePage !== 'networkProtocols' }"><NetworkProtocolsPanel kind="network" /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'mediaDownloader' }"><MediaDownloaderPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'audioExtractor' }"><AudioExtractorPanel /></div>
+    <div class="page-content" :class="{ hidden: activePage !== 'idPhoto' }"><IdPhotoPanel /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'baseConverter' }"><BaseConverter /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'checksum' }"><ChecksumCalculator /></div>
     <div class="page-content" :class="{ hidden: activePage !== 'csv' }"><CsvAnalyzer /></div>
